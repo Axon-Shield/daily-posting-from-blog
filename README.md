@@ -2,6 +2,63 @@
 
 Automatically distribute key messaging points from your weekly blog posts to LinkedIn and X (Twitter) on a daily basis using AI-powered content extraction.
 
+## 🎯 Executive Summary
+
+This system automatically transforms your long-form blog content into daily social media posts using advanced AI. Here's what it does:
+
+### How It Works
+
+1. **Fetches Content**: Reads your blog posts from your RSS/JSON feed (supports RSS, Atom, and JSON Feed formats)
+2. **AI Extraction**: Uses Claude Sonnet 4.5 to intelligently extract 7 key messaging points from each blog post
+3. **Smart Scheduling**: Distributes these messages daily across LinkedIn and X (Twitter) over the course of a week
+4. **Automated Posting**: GitHub Actions runs automatically - weekly to fetch new posts, daily to publish messages
+5. **Tracks Everything**: SQLite database ensures no duplicate posts and maintains posting history
+
+### Current Configuration (Axon-Shield)
+
+**✅ Fully Configured:**
+- Repository: `Axon-Shield/daily-posting-from-blog`
+- Blog Feed: https://blog.axonshield.com/feed.json (JSON Feed format)
+- AI Model: Claude Sonnet 4.5 (`claude-sonnet-4-20250514`)
+- Content Ready: 35 daily messages extracted from 5 blog posts
+- GitHub Secrets: `BLOG_RSS_FEED_URL` and `ANTHROPIC_API_KEY` configured
+
+**Blog Posts Processed:**
+1. "A Tale of Two Startups: Why Infrastructure Visibility Wins University Contracts" → 7 messages
+2. "University Contracts and Certificate Management: The Path to Contract Readiness" → 7 messages
+3. "The Hidden Foundation of Digital Trust: Why Trust Stores Matter..." → 7 messages
+4. "From Manual to Automated: The Executive Case for Certificate Management..." → 7 messages
+5. "How Nexus Transformed Certificate Management..." → 7 messages
+
+**⏳ Optional (Not Yet Configured):**
+- LinkedIn API credentials (required for LinkedIn posting)
+- X (Twitter) API credentials (required for X posting)
+
+### What Happens Next
+
+**Without Social Media Credentials:**
+- System will fetch new blog posts weekly ✅
+- AI will extract daily messages ✅
+- Posts won't be published to social media (credentials needed) ⏸️
+
+**With Social Media Credentials:**
+- Everything above, PLUS automated daily posting to LinkedIn and X 🚀
+
+### Cost Estimate
+
+- **Anthropic API**: ~$0.01-0.05 per blog post processed
+- **GitHub Actions**: Free (within GitHub's generous free tier)
+- **Storage**: Negligible (SQLite database)
+- **Total**: Extremely cost-effective for automated social media management
+
+### Key Benefits
+
+- **Time Savings**: 5 minutes of setup replaces hours of manual social media posting
+- **Consistency**: Never miss a day of posting
+- **Quality**: AI ensures professional, on-brand messaging
+- **Scalability**: Handles unlimited blog posts automatically
+- **No Lock-in**: Runs in your GitHub account, you own all the code and data
+
 ## 🌟 Features
 
 - **RSS Feed Integration**: Automatically fetch new blog posts from your RSS feed
