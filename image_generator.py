@@ -12,7 +12,7 @@ class ImageGenerator:
     """Generate images for social media posts using Grok."""
     
     XAI_API_BASE = "https://api.x.ai/v1"
-    IMAGE_MODEL = "grok-4-0709"
+    IMAGE_MODEL = "grok-vision-1212"
     
     def __init__(self, api_key: str = None):
         """

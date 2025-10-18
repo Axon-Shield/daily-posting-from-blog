@@ -28,7 +28,7 @@ def test_xai_api():
     }
     
     data = {
-        "model": "grok-4-0709",
+        "model": "grok-vision-1212",
         "prompt": "A simple red circle on a white background",
         "n": 1,
         "response_format": "url"
