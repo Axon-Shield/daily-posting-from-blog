@@ -130,6 +130,9 @@ class PostScheduler:
         """
         Schedule multiple messages intelligently.
         
+        IMPORTANT: Messages from the same blog post are scheduled ONE PER DAY.
+        This ensures each blog post's messages are distributed over multiple days.
+        
         Args:
             num_messages: Number of messages to schedule
             existing_schedules: List of already scheduled post times
@@ -153,8 +156,9 @@ class PostScheduler:
         
         scheduled_times = []
         
+        # Schedule ONE MESSAGE PER DAY for this blog post
         for _ in range(num_messages):
-            # Try to find a slot on current date
+            # Find available slot on current date
             slot_index = self.get_available_slot(current_date, existing_schedules + scheduled_times)
             
             if slot_index is not None:
@@ -162,7 +166,7 @@ class PostScheduler:
                 scheduled_time = self.create_scheduled_time(current_date, slot_index)
                 scheduled_times.append(scheduled_time)
             else:
-                # Day is full, move to next business day
+                # Day is full (4 posts already), move to next business day
                 current_date += timedelta(days=1)
                 current_date = self.get_next_business_day(current_date)
                 
@@ -174,6 +178,10 @@ class PostScheduler:
                 else:
                     # Should never happen, but handle gracefully
                     raise ValueError(f"Unable to schedule message on {current_date}")
+            
+            # MOVE TO NEXT DAY for next message from this blog post
+            current_date += timedelta(days=1)
+            current_date = self.get_next_business_day(current_date)
         
         return scheduled_times
     
