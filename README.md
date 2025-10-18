@@ -173,7 +173,7 @@ X_ACCESS_TOKEN=your_token_here
 X_ACCESS_TOKEN_SECRET=your_secret_here
 X_BEARER_TOKEN=your_bearer_token_here
 DATABASE_PATH=./data/posts.db
-POSTS_PER_WEEK=7
+POSTS_PER_BLOG=5
 EOF
 
 # Edit .env with your actual credentials
@@ -289,7 +289,7 @@ daily-posting-from-blog/
 | `X_ACCESS_TOKEN_SECRET` | X access token secret | For X/Twitter |
 | `X_BEARER_TOKEN` | X bearer token | For X/Twitter |
 | `DATABASE_PATH` | Path to SQLite database | Optional |
-| `POSTS_PER_WEEK` | Messages per post (default: 7) | Optional |
+| `POSTS_PER_BLOG` | Messages to extract per blog post (default: 5) | Optional |
 
 ### Customizing Schedule
 
@@ -372,7 +372,9 @@ Output shows:
 ## 📝 Customization Ideas
 
 ### Adjust Message Count
-Change `POSTS_PER_WEEK` in `.env` or GitHub Secrets to extract more or fewer messages per post.
+Change `POSTS_PER_BLOG` in `.env` or GitHub Secrets to extract more or fewer messages per post.
+
+Example: Set to `3` for 3 messages per blog, or `10` for 10 messages per blog.
 
 ### Custom Hashtags
 Edit `main.py` in the `post_daily_message()` method to customize hashtags:

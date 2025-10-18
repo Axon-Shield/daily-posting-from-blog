@@ -51,7 +51,7 @@ class BlogPostAutomation:
                 messages = self.content_extractor.extract_daily_messages(
                     title=post['title'],
                     content=post['content'],
-                    num_messages=Config.POSTS_PER_WEEK
+                    num_messages=Config.POSTS_PER_BLOG
                 )
                 
                 print(f"Extracted {len(messages)} messages")

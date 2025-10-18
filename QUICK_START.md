@@ -105,7 +105,7 @@ hashtags=['your', 'custom', 'tags']
 ### Change Messages Per Post
 
 In GitHub Secrets, set:
-- `POSTS_PER_WEEK` = `5` (for 5 messages per post instead of 7)
+- `POSTS_PER_BLOG` = `3` (for 3 messages per post instead of 5)
 
 ## 🐛 Quick Troubleshooting
 

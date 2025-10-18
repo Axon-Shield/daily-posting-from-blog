@@ -32,7 +32,7 @@ class Config:
     DATABASE_PATH = os.getenv('DATABASE_PATH', './data/posts.db')
     
     # Schedule Configuration
-    POSTS_PER_WEEK = int(os.getenv('POSTS_PER_WEEK', 7))
+    POSTS_PER_BLOG = int(os.getenv('POSTS_PER_BLOG', 5))
     
     # Date Filtering Configuration
     MINIMUM_POST_DATE = os.getenv('MINIMUM_POST_DATE', '2025-10-15')

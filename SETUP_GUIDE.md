@@ -254,7 +254,7 @@ X_BEARER_TOKEN=your_bearer_token
 
 # Database
 DATABASE_PATH=./data/posts.db
-POSTS_PER_WEEK=7
+POSTS_PER_BLOG=5
 EOF
 
 # Edit with your actual values

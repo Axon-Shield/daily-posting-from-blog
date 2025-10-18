@@ -47,7 +47,7 @@ jobs:
         BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         DATABASE_PATH: ./data/posts.db
-        POSTS_PER_WEEK: 7
+        POSTS_PER_BLOG: 5
       run: |
         python main.py --fetch-posts
     

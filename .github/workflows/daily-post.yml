@@ -64,7 +64,7 @@ jobs:
         X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
         X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
         DATABASE_PATH: ./data/posts.db
-        POSTS_PER_WEEK: 7
+        POSTS_PER_BLOG: 5
       run: |
         python main.py --post-daily
     
