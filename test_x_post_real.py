@@ -5,6 +5,7 @@ Fetches blog, extracts message, generates image, posts to X, then cleans up.
 """
 import sys
 import os
+import traceback
 from pathlib import Path
 from config import Config
 from database import Database
@@ -146,7 +147,6 @@ def test_x_post_real():
     
     except Exception as e:
         print(f"❌ Error during test: {e}")
-        import traceback
         traceback.print_exc()
         
         # Clean up on error
@@ -169,7 +169,6 @@ if __name__ == "__main__":
         sys.exit(1)
     except Exception as e:
         print(f"\n\n❌ Unexpected error: {e}")
-        import traceback
         traceback.print_exc()
         sys.exit(1)
 
