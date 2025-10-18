@@ -26,6 +26,7 @@ class Config:
     LINKEDIN_USER_ID = os.getenv('LINKEDIN_USER_ID')
     LINKEDIN_ORG_ID = os.getenv('LINKEDIN_ORG_ID')  # For posting as organization
     LINKEDIN_POST_AS_ORG = os.getenv('LINKEDIN_POST_AS_ORG', 'true').lower() == 'true'
+    LINKEDIN_ENABLED = os.getenv('LINKEDIN_ENABLED', 'false').lower() == 'true'  # Disabled by default
     
     # X (Twitter) Configuration
     X_API_KEY = os.getenv('X_API_KEY')
