@@ -1,0 +1,114 @@
+name: Clear Unposted Messages
+
+on:
+  # Manual trigger only - this is a destructive operation
+  workflow_dispatch:
+    inputs:
+      clear_all:
+        description: 'Clear ALL messages including posted ones (dangerous!)'
+        required: false
+        type: boolean
+        default: false
+      confirm:
+        description: 'Type "CONFIRM" to proceed'
+        required: true
+        type: string
+
+jobs:
+  clear-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Validate confirmation
+      run: |
+        if [ "${{ github.event.inputs.confirm }}" != "CONFIRM" ]; then
+          echo "❌ Confirmation not provided. Operation cancelled."
+          echo "Please type CONFIRM in the confirm field to proceed."
+          exit 1
+        fi
+        echo "✓ Confirmation received"
+    
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create data directory
+      run: mkdir -p data
+    
+    - name: Download database from artifacts (if exists)
+      uses: actions/download-artifact@v4
+      with:
+        name: posts-database
+        path: data/
+      continue-on-error: true
+    
+    - name: Show database status before clearing
+      env:
+        BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        DATABASE_PATH: ./data/posts.db
+      run: |
+        echo "=== Database Status BEFORE Clearing ==="
+        python main.py --status
+    
+    - name: Clear unposted messages
+      if: ${{ github.event.inputs.clear_all != 'true' }}
+      env:
+        DATABASE_PATH: ./data/posts.db
+      run: |
+        echo "🗑️  Clearing UNPOSTED messages only..."
+        python clear_unposted.py
+    
+    - name: Clear ALL messages (including posted)
+      if: ${{ github.event.inputs.clear_all == 'true' }}
+      env:
+        DATABASE_PATH: ./data/posts.db
+      run: |
+        echo "⚠️  WARNING: Clearing ALL messages including posted ones!"
+        python clear_unposted.py --all << EOF
+        yes
+        EOF
+    
+    - name: Show database status after clearing
+      env:
+        BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        DATABASE_PATH: ./data/posts.db
+      run: |
+        echo ""
+        echo "=== Database Status AFTER Clearing ==="
+        python main.py --status
+    
+    - name: Upload updated database as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: posts-database
+        path: data/posts.db
+        retention-days: 90
+    
+    - name: Summary
+      run: |
+        echo ""
+        echo "✓ Clear operation complete!"
+        echo ""
+        if [ "${{ github.event.inputs.clear_all }}" == "true" ]; then
+          echo "  Mode: Cleared ALL messages (including posted)"
+        else
+          echo "  Mode: Cleared UNPOSTED messages only"
+        fi
+        echo ""
+        echo "Next steps:"
+        echo "  1. Run 'Fetch New Blog Posts' workflow to reload content"
+        echo "  2. Messages will be scheduled automatically"
+        echo ""
+
