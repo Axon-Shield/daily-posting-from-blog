@@ -26,7 +26,29 @@ Before starting, make sure you have:
 
 **Estimated cost**: ~$0.01-0.05 per blog post processed
 
-### 2. LinkedIn API (Optional)
+### 2. xAI Grok API (Optional but Recommended)
+
+**Cost**: Pay-as-you-go ($0.07 per image)
+
+The xAI Grok API generates professional AI images for your social media posts, making them much more engaging.
+
+1. Go to [xAI API Portal](https://x.ai/api)
+2. Sign up for API access
+3. Once approved, navigate to API Keys
+4. Create a new API key
+5. Copy and save the key securely
+
+**Estimated cost**: ~$0.35 per blog post (5 images × $0.07), about $1.50/month for 4 blog posts
+
+**Why it's worth it**:
+- Posts with images get 2-3x more engagement
+- Professional, custom AI-generated visuals
+- Automatically tailored to each message
+- Extremely affordable for the value
+
+**To disable**: Set `GENERATE_IMAGES=false` in your environment variables (not recommended)
+
+### 3. LinkedIn API (Optional)
 
 **Complexity**: Medium (requires app approval)
 
@@ -84,7 +106,7 @@ Before starting, make sure you have:
 
 **Note**: LinkedIn access tokens expire. For production use, implement token refresh or use a long-lived token.
 
-### 3. X (Twitter) API (Optional)
+### 4. X (Twitter) API (Optional)
 
 **Complexity**: Medium (requires developer account approval)
 
@@ -201,6 +223,8 @@ git push -u origin main
 |------------|-------|----------|
 | `BLOG_RSS_FEED_URL` | Your blog RSS feed URL | Yes |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key | Yes |
+| `XAI_API_KEY` | xAI Grok API key for images | Recommended |
+| `GENERATE_IMAGES` | Set to `true` or `false` | Optional (default: true) |
 | `LINKEDIN_ACCESS_TOKEN` | LinkedIn access token | For LinkedIn |
 | `LINKEDIN_USER_ID` | LinkedIn user ID (numbers only) | For LinkedIn |
 | `X_API_KEY` | X API key | For Twitter |
@@ -238,8 +262,12 @@ cat > .env << 'EOF'
 # Blog Configuration
 BLOG_RSS_FEED_URL=https://yourblog.com/feed
 
-# Anthropic API
+# Anthropic API (for content extraction)
 ANTHROPIC_API_KEY=sk-ant-xxxxx
+
+# xAI Grok API (for image generation - recommended)
+XAI_API_KEY=xai-xxxxx
+GENERATE_IMAGES=true
 
 # LinkedIn API (optional)
 LINKEDIN_ACCESS_TOKEN=your_token
