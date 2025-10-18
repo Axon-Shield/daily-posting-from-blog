@@ -127,12 +127,12 @@ class LinkedInPoster:
         except:
             return False
     
-    def _upload_image(self, image_url: str) -> Optional[str]:
+    def _upload_image(self, image_path: str) -> Optional[str]:
         """
         Upload image to LinkedIn and return media URN.
         
         Args:
-            image_url: URL of image to upload
+            image_path: Local file path or URL of image to upload
             
         Returns:
             Media URN string if successful, None otherwise

@@ -125,12 +125,12 @@ class XPoster:
         except:
             return False
     
-    def _upload_image(self, image_url: str) -> Optional[str]:
+    def _upload_image(self, image_path: str) -> Optional[str]:
         """
         Upload image to X and return media ID.
         
         Args:
-            image_url: URL of image to upload
+            image_path: Local file path or URL of image to upload
             
         Returns:
             Media ID string if successful, None otherwise
@@ -140,24 +140,31 @@ class XPoster:
             return None
         
         try:
-            # Download image to temporary file
-            response = requests.get(image_url, timeout=30)
-            response.raise_for_status()
-            
-            # Save to temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
-                tmp_file.write(response.content)
-                tmp_path = tmp_file.name
-            
-            try:
-                # Upload to X using v1.1 API
-                media = self.api.media_upload(filename=tmp_path)
+            # Check if it's a local file or URL
+            if os.path.isfile(image_path):
+                # Already a local file, upload directly
+                media = self.api.media_upload(filename=image_path)
                 print(f"✓ Uploaded image to X: {media.media_id}")
                 return str(media.media_id)
-            finally:
-                # Clean up temporary file
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
+            else:
+                # It's a URL, download first
+                response = requests.get(image_path, timeout=30)
+                response.raise_for_status()
+                
+                # Save to temporary file
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
+                    tmp_file.write(response.content)
+                    tmp_path = tmp_file.name
+                
+                try:
+                    # Upload to X using v1.1 API
+                    media = self.api.media_upload(filename=tmp_path)
+                    print(f"✓ Uploaded image to X: {media.media_id}")
+                    return str(media.media_id)
+                finally:
+                    # Clean up temporary file
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
             
         except Exception as e:
             print(f"Error uploading image to X: {e}")

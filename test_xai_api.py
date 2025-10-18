@@ -4,6 +4,7 @@ Simple test to verify xAI API key and image generation access.
 """
 import requests
 import os
+import base64
 from config import Config
 
 def test_xai_api():
@@ -28,10 +29,10 @@ def test_xai_api():
     }
     
     data = {
-        "model": "grok-4-fast-reasoning",
+        "model": "grok-2-image",
         "prompt": "A simple red circle on a white background",
         "n": 1,
-        "response_format": "url"
+        "response_format": "b64_json"
     }
     
     try:
@@ -50,8 +51,14 @@ def test_xai_api():
         if response.status_code == 200:
             result = response.json()
             if 'data' in result and len(result['data']) > 0:
-                image_url = result['data'][0]['url']
-                print(f"✅ SUCCESS! Image generated: {image_url}")
+                b64_data = result['data'][0]['b64_json']
+                # Decode and save test image
+                image_bytes = base64.b64decode(b64_data)
+                test_path = "test_image.jpg"
+                with open(test_path, 'wb') as f:
+                    f.write(image_bytes)
+                print(f"✅ SUCCESS! Image generated and saved to: {test_path}")
+                print(f"   Image size: {len(image_bytes)} bytes")
                 return True
             else:
                 print(f"⚠️  Response missing image data")

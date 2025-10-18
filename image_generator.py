@@ -3,6 +3,8 @@ AI-powered image generation using xAI's Grok API.
 """
 import requests
 import os
+import base64
+import tempfile
 from typing import Optional, Dict
 from config import Config
 from anthropic import Anthropic
@@ -12,7 +14,7 @@ class ImageGenerator:
     """Generate images for social media posts using Grok."""
     
     XAI_API_BASE = "https://api.x.ai/v1"
-    IMAGE_MODEL = "grok-4-fast-reasoning"
+    IMAGE_MODEL = "grok-2-image"
     
     def __init__(self, api_key: str = None):
         """
@@ -90,7 +92,7 @@ Return ONLY the image prompt, nothing else."""
                 "model": self.IMAGE_MODEL,
                 "prompt": prompt,
                 "n": 1,  # Generate 1 image
-                "response_format": "url"
+                "response_format": "b64_json"  # Get base64 encoded image
             }
             
             response = requests.post(
@@ -100,21 +102,29 @@ Return ONLY the image prompt, nothing else."""
                 timeout=60
             )
             
-            # Check for errors before raising
-            if response.status_code != 200:
-                error_detail = response.text
-                print(f"xAI API Error ({response.status_code}): {error_detail}")
-                return None
+            # Check for errors
+            response.raise_for_status()
             
             result = response.json()
             
-            # Extract image URL
+            # Extract base64 image data
             if 'data' in result and len(result['data']) > 0:
-                image_url = result['data'][0]['url']
-                print(f"✓ Generated image: {image_url[:50]}...")
-                return image_url
+                b64_data = result['data'][0]['b64_json']
+                
+                # Decode base64 to bytes
+                image_bytes = base64.b64decode(b64_data)
+                
+                # Save to temporary file and get a URL-like identifier
+                # For social media posting, we need to save the image temporarily
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+                temp_file.write(image_bytes)
+                temp_file.close()
+                
+                image_path = temp_file.name
+                print(f"✓ Generated image saved to: {image_path}")
+                return image_path
             else:
-                print(f"Warning: No image URL in response: {result}")
+                print(f"Warning: No image data in response: {result}")
                 return None
         
         except requests.exceptions.RequestException as e:
@@ -176,16 +186,23 @@ Return ONLY the image prompt, nothing else."""
         image_prompt = self.create_image_prompt(blog_title, message_text)
         print(f"Image prompt: {image_prompt[:100]}...")
         
-        # Step 2: Generate image
-        image_url = self.generate_image(image_prompt)
+        # Step 2: Generate image (returns local file path)
+        image_path = self.generate_image(image_prompt)
         
-        if not image_url:
+        if not image_path:
             return None
         
-        # Step 3: Optionally download for backup
+        # Image is already saved to temporary file
+        # Optionally backup to permanent location
         if message_id is not None:
-            save_path = f"./data/images/message_{message_id}.jpg"
-            self.download_image(image_url, save_path)
+            permanent_path = f"./data/images/message_{message_id}.jpg"
+            try:
+                os.makedirs(os.path.dirname(permanent_path), exist_ok=True)
+                import shutil
+                shutil.copy2(image_path, permanent_path)
+                print(f"✓ Backed up image to: {permanent_path}")
+            except Exception as e:
+                print(f"Warning: Could not backup image: {e}")
         
-        return image_url
+        return image_path
 
