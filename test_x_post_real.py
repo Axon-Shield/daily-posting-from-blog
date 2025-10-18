@@ -4,6 +4,8 @@ Real-world X posting test using actual blog content.
 Fetches blog, extracts message, generates image, posts to X, then cleans up.
 """
 import sys
+import os
+from pathlib import Path
 from config import Config
 from database import Database
 from rss_parser import RSSParser
@@ -33,10 +35,13 @@ def test_x_post_real():
     
     print("✅ Configuration validated\n")
     
-    # Ensure data directory exists
-    import os
-    os.makedirs('./data', exist_ok=True)
-    print("✓ Created data directory\n")
+    # Ensure data directory exists (extract from database path)
+    db_path = Config.DATABASE_PATH
+    db_dir = os.path.dirname(db_path)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+        print(f"✓ Created data directory: {db_dir}")
+    print(f"✓ Database path: {db_path}\n")
     
     # Initialize components
     db = Database()
