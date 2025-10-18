@@ -260,4 +260,23 @@ class Database:
                 })
             
             return results
+    
+    def delete_blog_post(self, post_id: int):
+        """
+        Delete a blog post and all its associated messages.
+        
+        Args:
+            post_id: The ID of the blog post to delete
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Delete associated messages first (due to foreign key)
+            cursor.execute("DELETE FROM posted_messages WHERE blog_post_id = ?", (post_id,))
+            
+            # Delete the blog post
+            cursor.execute("DELETE FROM blog_posts WHERE id = ?", (post_id,))
+            
+            conn.commit()
+            print(f"✓ Deleted blog post {post_id} and all associated messages")
 
