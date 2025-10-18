@@ -33,6 +33,11 @@ def test_x_post_real():
     
     print("✅ Configuration validated\n")
     
+    # Ensure data directory exists
+    import os
+    os.makedirs('./data', exist_ok=True)
+    print("✓ Created data directory\n")
+    
     # Initialize components
     db = Database()
     rss_parser = RSSParser()
