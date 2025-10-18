@@ -1,0 +1,93 @@
+name: Database Status Check
+
+on:
+  # Allow manual trigger
+  workflow_dispatch:
+  
+  # Allow triggering from other workflows
+  repository_dispatch:
+    types: [database-status]
+
+jobs:
+  database-status:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create data directory
+      run: mkdir -p data
+    
+    - name: Download database from artifacts (if exists)
+      uses: actions/download-artifact@v4
+      with:
+        name: posts-database
+        path: data/
+      continue-on-error: true
+    
+    - name: Show database status
+      env:
+        BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        DATABASE_PATH: ./data/posts.db
+      run: |
+        echo "============================================================"
+        echo "DATABASE STATUS REPORT"
+        echo "============================================================"
+        echo "Timestamp: $(date)"
+        echo ""
+        
+        # Check if database exists
+        if [ -f "./data/posts.db" ]; then
+          echo "✅ Database file exists: ./data/posts.db"
+          echo "📊 Database size: $(du -h ./data/posts.db | cut -f1)"
+          echo ""
+          
+          # Show database contents using Python
+          python main.py --status
+          echo ""
+          
+          # Show raw database contents
+          echo "📋 Raw Database Contents:"
+          echo "------------------------"
+          echo "Blog Posts:"
+          sqlite3 ./data/posts.db "SELECT id, title, published_date, fetched_at FROM blog_posts ORDER BY published_date DESC LIMIT 10;" || echo "No blog posts found"
+          echo ""
+          echo "Posted Messages:"
+          sqlite3 ./data/posts.db "SELECT id, blog_post_id, message_index, posted_to_linkedin, posted_to_x, posted_at FROM posted_messages ORDER BY id DESC LIMIT 10;" || echo "No posted messages found"
+          echo ""
+          echo "Database Schema:"
+          sqlite3 ./data/posts.db ".schema"
+        else
+          echo "❌ Database file does not exist"
+          echo "This could mean:"
+          echo "  - No workflows have run yet"
+          echo "  - No artifacts have been created"
+          echo "  - Database hasn't been initialized"
+        fi
+        
+        echo ""
+        echo "============================================================"
+        echo "END OF DATABASE STATUS REPORT"
+        echo "============================================================"
+    
+    - name: Upload database status as artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: database-status-report
+        path: |
+          data/posts.db
+        retention-days: 7

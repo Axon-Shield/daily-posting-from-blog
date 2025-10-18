@@ -45,7 +45,7 @@ class RSSParser:
             
             for entry in feed.entries[:limit]:
                 post = self._parse_entry(entry)
-                if post:
+                if post and self._is_post_recent_enough(post):
                     posts.append(post)
             
             return posts
@@ -74,7 +74,7 @@ class RSSParser:
             items = feed_data.get('items', [])[:limit]
             for item in items:
                 post = self._parse_json_item(item)
-                if post:
+                if post and self._is_post_recent_enough(post):
                     posts.append(post)
             
             return posts
@@ -169,4 +169,40 @@ class RSSParser:
         text = ' '.join(chunk for chunk in chunks if chunk)
         
         return text
+    
+    def _is_post_recent_enough(self, post: Dict) -> bool:
+        """
+        Check if a post is recent enough based on the minimum date configuration.
+        
+        Args:
+            post: Dictionary containing post information with 'published_date' key
+            
+        Returns:
+            True if post is recent enough, False otherwise
+        """
+        try:
+            # Parse the published date from the post
+            published_date_str = post.get('published_date', '')
+            if not published_date_str:
+                # If no published date, assume it's recent enough
+                return True
+            
+            # Parse the published date
+            published_date = datetime.fromisoformat(published_date_str.replace('Z', '+00:00'))
+            
+            # Parse the minimum date from configuration
+            min_date = datetime.fromisoformat(Config.MINIMUM_POST_DATE)
+            
+            # Check if the post is recent enough
+            is_recent = published_date.date() >= min_date.date()
+            
+            if not is_recent:
+                print(f"Skipping post '{post.get('title', 'Untitled')}' - published {published_date.date()} (before {min_date.date()})")
+            
+            return is_recent
+            
+        except Exception as e:
+            print(f"Error checking post date: {e}")
+            # If we can't parse the date, assume it's recent enough
+            return True
 

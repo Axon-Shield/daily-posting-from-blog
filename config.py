@@ -34,6 +34,9 @@ class Config:
     # Schedule Configuration
     POSTS_PER_WEEK = int(os.getenv('POSTS_PER_WEEK', 7))
     
+    # Date Filtering Configuration
+    MINIMUM_POST_DATE = os.getenv('MINIMUM_POST_DATE', '2025-10-15')
+    
     @classmethod
     def validate(cls):
         """Validate that all required configuration is present."""
