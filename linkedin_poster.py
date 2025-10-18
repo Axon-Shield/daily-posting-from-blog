@@ -165,10 +165,16 @@ class LinkedInPoster:
                 'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']['uploadUrl']
             asset_urn = register_result['value']['asset']
             
-            # Step 2: Download image
-            img_response = requests.get(image_url, timeout=30)
-            img_response.raise_for_status()
-            image_data = img_response.content
+            # Step 2: Read image data (from file path or URL)
+            if os.path.isfile(image_path):
+                # Local file
+                with open(image_path, 'rb') as f:
+                    image_data = f.read()
+            else:
+                # Assume it's a URL
+                img_response = requests.get(image_path, timeout=30)
+                img_response.raise_for_status()
+                image_data = img_response.content
             
             # Step 3: Upload image binary
             upload_headers = {
