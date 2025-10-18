@@ -12,7 +12,7 @@ class ImageGenerator:
     """Generate images for social media posts using Grok."""
     
     XAI_API_BASE = "https://api.x.ai/v1"
-    IMAGE_MODEL = "grok-2-image-1212"
+    IMAGE_MODEL = "grok-2-image"
     
     def __init__(self, api_key: str = None):
         """
@@ -100,7 +100,12 @@ Return ONLY the image prompt, nothing else."""
                 timeout=60
             )
             
-            response.raise_for_status()
+            # Check for errors before raising
+            if response.status_code != 200:
+                error_detail = response.text
+                print(f"xAI API Error ({response.status_code}): {error_detail}")
+                return None
+            
             result = response.json()
             
             # Extract image URL
@@ -109,9 +114,14 @@ Return ONLY the image prompt, nothing else."""
                 print(f"✓ Generated image: {image_url[:50]}...")
                 return image_url
             else:
-                print("Warning: No image URL in response")
+                print(f"Warning: No image URL in response: {result}")
                 return None
         
+        except requests.exceptions.RequestException as e:
+            print(f"Error generating image: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                print(f"Response body: {e.response.text}")
+            return None
         except Exception as e:
             print(f"Error generating image: {e}")
             return None
