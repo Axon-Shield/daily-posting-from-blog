@@ -1,14 +1,24 @@
-name: Daily Social Media Post
+name: Social Media Posting (Scheduled)
 
 on:
   schedule:
-    # Run daily at 12:00 PM UK time - after fetch-posts
-    # GMT period (Oct-Dec): 12:00 PM UTC = 12:00 PM UK time
-    - cron: '0 12 * 10-12 *'
-    # GMT period (Jan-Mar): 12:00 PM UTC = 12:00 PM UK time
-    - cron: '0 12 * 1-3 *'
-    # BST period (Apr-Sep): 11:00 AM UTC = 12:00 PM UK time
-    - cron: '0 11 * 4-9 *'
+    # Check for scheduled posts 4 times daily at posting times (Eastern Time):
+    # 9:00 AM EST = 14:00 UTC (EST) / 13:00 UTC (EDT)
+    # 11:00 AM EST = 16:00 UTC (EST) / 15:00 UTC (EDT)  
+    # 1:00 PM EST = 18:00 UTC (EST) / 17:00 UTC (EDT)
+    # 3:00 PM EST = 20:00 UTC (EST) / 19:00 UTC (EDT)
+    
+    # Winter schedule (EST - Nov-Mar)
+    - cron: '0 14 * 11-12,1-3 1-5'  # 9am EST, Mon-Fri
+    - cron: '0 16 * 11-12,1-3 1-5'  # 11am EST, Mon-Fri
+    - cron: '0 18 * 11-12,1-3 1-5'  # 1pm EST, Mon-Fri
+    - cron: '0 20 * 11-12,1-3 1-5'  # 3pm EST, Mon-Fri
+    
+    # Summer schedule (EDT - Mar-Nov)  
+    - cron: '0 13 * 4-10 1-5'  # 9am EDT, Mon-Fri
+    - cron: '0 15 * 4-10 1-5'  # 11am EDT, Mon-Fri
+    - cron: '0 17 * 4-10 1-5'  # 1pm EDT, Mon-Fri
+    - cron: '0 19 * 4-10 1-5'  # 3pm EDT, Mon-Fri
   
   # Allow manual trigger
   workflow_dispatch:

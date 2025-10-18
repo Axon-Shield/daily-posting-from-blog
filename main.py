@@ -174,17 +174,33 @@ class BlogPostAutomation:
         print(f"LinkedIn API: {'✓ Configured' if Config.LINKEDIN_ACCESS_TOKEN else '✗ Not configured'}")
         print(f"X (Twitter) API: {'✓ Configured' if Config.X_API_KEY else '✗ Not configured'}")
         
-        # Show next message
+        # Show next scheduled message
         next_message = self.db.get_next_message_to_post()
         if next_message:
-            print("\n--- Next Message to Post ---")
+            print("\n--- Next Message Due Now ---")
             print(f"Blog: {next_message['blog_title']}")
+            print(f"Scheduled for: {next_message.get('scheduled_for', 'Not scheduled')}")
             print(f"Message: {next_message['message_text'][:100]}...")
             print(f"LinkedIn: {'Posted' if next_message['posted_to_linkedin'] else 'Pending'}")
             print(f"X: {'Posted' if next_message['posted_to_x'] else 'Pending'}")
         else:
-            print("\n--- Next Message to Post ---")
-            print("No messages pending")
+            print("\n--- Next Message Due Now ---")
+            print("No messages due at this time")
+        
+        # Show upcoming schedule
+        upcoming = self.db.get_upcoming_schedule(limit=5)
+        if upcoming:
+            print("\n--- Upcoming Schedule (Next 5) ---")
+            for idx, post in enumerate(upcoming, 1):
+                from datetime import datetime
+                import pytz
+                scheduled = datetime.fromisoformat(post['scheduled_for'])
+                eastern = pytz.timezone('US/Eastern')
+                scheduled_et = scheduled.astimezone(eastern)
+                date_str = scheduled_et.strftime('%a %m/%d at %I:%M %p ET')
+                print(f"{idx}. {date_str}")
+                print(f"   {post['blog_title'][:50]}...")
+                print(f"   \"{post['message_preview']}\"")
         
         print("\n" + "="*60 + "\n")
     

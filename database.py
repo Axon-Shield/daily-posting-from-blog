@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional
 from config import Config
+from scheduler import PostScheduler
 
 
 class Database:
@@ -14,6 +15,7 @@ class Database:
     def __init__(self, db_path: str = None):
         """Initialize database connection."""
         self.db_path = db_path or Config.DATABASE_PATH
+        self.scheduler = PostScheduler()
         self.init_database()
     
     def init_database(self):
@@ -41,6 +43,7 @@ class Database:
                     blog_post_id INTEGER NOT NULL,
                     message_index INTEGER NOT NULL,
                     message_text TEXT NOT NULL,
+                    scheduled_for TEXT,
                     posted_to_linkedin BOOLEAN DEFAULT 0,
                     posted_to_x BOOLEAN DEFAULT 0,
                     posted_at TEXT,
@@ -53,7 +56,7 @@ class Database:
     
     def save_blog_post(self, url: str, title: str, content: str, 
                       published_date: str, messages: List[str]) -> int:
-        """Save a blog post and its extracted messages."""
+        """Save a blog post and its extracted messages with intelligent scheduling."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
@@ -80,37 +83,52 @@ class Database:
             
             post_id = cursor.lastrowid
             
-            # Insert messages
-            for idx, message in enumerate(messages):
+            # Get existing scheduled times to avoid conflicts
+            existing_schedules = self.get_all_scheduled_times()
+            
+            # Schedule the messages intelligently
+            scheduled_times = self.scheduler.schedule_messages(
+                num_messages=len(messages),
+                existing_schedules=existing_schedules
+            )
+            
+            # Insert messages with scheduled times
+            for idx, (message, scheduled_time) in enumerate(zip(messages, scheduled_times)):
                 cursor.execute("""
                     INSERT INTO posted_messages 
-                    (blog_post_id, message_index, message_text)
-                    VALUES (?, ?, ?)
-                """, (post_id, idx, message))
+                    (blog_post_id, message_index, message_text, scheduled_for)
+                    VALUES (?, ?, ?, ?)
+                """, (post_id, idx, message, scheduled_time.isoformat()))
             
             conn.commit()
+            
+            # Print scheduling summary
+            print(f"\n{self.scheduler.format_schedule_summary(scheduled_times)}")
+            
             return post_id
     
     def get_next_message_to_post(self) -> Optional[Dict]:
-        """Get the next message that needs to be posted."""
+        """Get the next message that needs to be posted (based on schedule)."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
-            # Find oldest unposted message
+            # Find next scheduled message that's due and not fully posted
             cursor.execute("""
                 SELECT 
                     pm.id,
                     pm.blog_post_id,
                     pm.message_index,
                     pm.message_text,
+                    pm.scheduled_for,
                     pm.posted_to_linkedin,
                     pm.posted_to_x,
                     bp.title,
                     bp.post_url
                 FROM posted_messages pm
                 JOIN blog_posts bp ON pm.blog_post_id = bp.id
-                WHERE pm.posted_to_linkedin = 0 OR pm.posted_to_x = 0
-                ORDER BY bp.published_date ASC, pm.message_index ASC
+                WHERE (pm.posted_to_linkedin = 0 OR pm.posted_to_x = 0)
+                  AND pm.scheduled_for IS NOT NULL
+                ORDER BY pm.scheduled_for ASC
                 LIMIT 1
             """)
             
@@ -118,15 +136,22 @@ class Database:
             if not row:
                 return None
             
+            scheduled_time = datetime.fromisoformat(row[4])
+            
+            # Check if it's time to post
+            if not self.scheduler.is_time_to_post(scheduled_time):
+                return None  # Not time yet
+            
             return {
                 'id': row[0],
                 'blog_post_id': row[1],
                 'message_index': row[2],
                 'message_text': row[3],
-                'posted_to_linkedin': bool(row[4]),
-                'posted_to_x': bool(row[5]),
-                'blog_title': row[6],
-                'blog_url': row[7]
+                'scheduled_for': row[4],
+                'posted_to_linkedin': bool(row[5]),
+                'posted_to_x': bool(row[6]),
+                'blog_title': row[7],
+                'blog_url': row[8]
             }
     
     def mark_posted_to_linkedin(self, message_id: int):
@@ -167,4 +192,55 @@ class Database:
                 WHERE posted_to_linkedin = 1 AND posted_to_x = 1
             """)
             return cursor.fetchone()[0]
+    
+    def get_all_scheduled_times(self) -> List[datetime]:
+        """Get all scheduled times for existing messages."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT scheduled_for FROM posted_messages 
+                WHERE scheduled_for IS NOT NULL
+            """)
+            
+            scheduled_times = []
+            for row in cursor.fetchall():
+                try:
+                    scheduled_times.append(datetime.fromisoformat(row[0]))
+                except (ValueError, TypeError):
+                    continue
+            
+            return scheduled_times
+    
+    def get_upcoming_schedule(self, limit: int = 10) -> List[Dict]:
+        """Get upcoming scheduled posts."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT 
+                    pm.id,
+                    pm.scheduled_for,
+                    pm.message_text,
+                    pm.posted_to_linkedin,
+                    pm.posted_to_x,
+                    bp.title
+                FROM posted_messages pm
+                JOIN blog_posts bp ON pm.blog_post_id = bp.id
+                WHERE pm.scheduled_for IS NOT NULL
+                  AND (pm.posted_to_linkedin = 0 OR pm.posted_to_x = 0)
+                ORDER BY pm.scheduled_for ASC
+                LIMIT ?
+            """, (limit,))
+            
+            results = []
+            for row in cursor.fetchall():
+                results.append({
+                    'id': row[0],
+                    'scheduled_for': row[1],
+                    'message_preview': row[2][:100] + '...' if len(row[2]) > 100 else row[2],
+                    'posted_to_linkedin': bool(row[3]),
+                    'posted_to_x': bool(row[4]),
+                    'blog_title': row[5]
+                })
+            
+            return results
 
