@@ -88,6 +88,8 @@ class BlogPostAutomation:
         print(f"Blog Post: {message_data['blog_title']}")
         print(f"Message #{message_data['message_index'] + 1}")
         print(f"URL: {message_data['blog_url']}")
+        if message_data.get('image_url'):
+            print(f"Image: {message_data['image_url'][:60]}...")
         print(f"\nBase Message:\n{message_data['message_text']}\n")
         
         # Post to LinkedIn
@@ -104,7 +106,7 @@ class BlogPostAutomation:
                 
                 print(f"LinkedIn Message:\n{enhanced_message}\n")
                 
-                result = self.linkedin_poster.post(enhanced_message)
+                result = self.linkedin_poster.post(enhanced_message, image_url=message_data.get('image_url'))
                 
                 if result['success']:
                     print("✓ Successfully posted to LinkedIn")
@@ -134,7 +136,7 @@ class BlogPostAutomation:
                 
                 print(f"X Message:\n{enhanced_message}\n")
                 
-                result = self.x_poster.post(enhanced_message)
+                result = self.x_poster.post(enhanced_message, image_url=message_data.get('image_url'))
                 
                 if result['success']:
                     print(f"✓ Successfully posted to X (Tweet ID: {result.get('tweet_id')})")

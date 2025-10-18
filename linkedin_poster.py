@@ -2,6 +2,8 @@
 LinkedIn posting module.
 """
 import requests
+import os
+import tempfile
 from typing import Dict, Optional
 from config import Config
 
@@ -21,12 +23,13 @@ class LinkedInPoster:
         self.user_id = user_id or Config.LINKEDIN_USER_ID
         self.api_base = "https://api.linkedin.com/v2"
     
-    def post(self, text: str) -> Dict:
+    def post(self, text: str, image_url: Optional[str] = None) -> Dict:
         """
-        Post content to LinkedIn.
+        Post content to LinkedIn with optional image.
         
         Args:
             text: The text content to post
+            image_url: Optional URL of image to attach
             
         Returns:
             Dictionary with response information
@@ -49,13 +52,29 @@ class LinkedInPoster:
                     "shareCommentary": {
                         "text": text
                     },
-                    "shareMediaCategory": "NONE"
+                    "shareMediaCategory": "IMAGE" if image_url else "NONE"
                 }
             },
             "visibility": {
                 "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
             }
         }
+        
+        # If image URL provided, upload and attach it
+        if image_url:
+            try:
+                image_urn = self._upload_image(image_url)
+                if image_urn:
+                    post_data["specificContent"]["com.linkedin.ugc.ShareContent"]["media"] = [{
+                        "status": "READY",
+                        "media": image_urn
+                    }]
+                else:
+                    print("Warning: Image upload failed, posting without image")
+                    post_data["specificContent"]["com.linkedin.ugc.ShareContent"]["shareMediaCategory"] = "NONE"
+            except Exception as e:
+                print(f"Warning: Failed to attach image: {e}")
+                post_data["specificContent"]["com.linkedin.ugc.ShareContent"]["shareMediaCategory"] = "NONE"
         
         try:
             response = requests.post(
@@ -107,4 +126,62 @@ class LinkedInPoster:
         
         except:
             return False
+    
+    def _upload_image(self, image_url: str) -> Optional[str]:
+        """
+        Upload image to LinkedIn and return media URN.
+        
+        Args:
+            image_url: URL of image to upload
+            
+        Returns:
+            Media URN string if successful, None otherwise
+        """
+        try:
+            # Step 1: Register upload
+            register_upload_url = f"{self.api_base}/assets?action=registerUpload"
+            register_data = {
+                "registerUploadRequest": {
+                    "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
+                    "owner": f"urn:li:person:{self.user_id}",
+                    "serviceRelationships": [{
+                        "relationshipType": "OWNER",
+                        "identifier": "urn:li:userGeneratedContent"
+                    }]
+                }
+            }
+            
+            headers = {
+                "Authorization": f"Bearer {self.access_token}",
+                "Content-Type": "application/json",
+                "X-Restli-Protocol-Version": "2.0.0"
+            }
+            
+            response = requests.post(register_upload_url, headers=headers, json=register_data, timeout=30)
+            response.raise_for_status()
+            
+            register_result = response.json()
+            upload_url = register_result['value']['uploadMechanism'][
+                'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']['uploadUrl']
+            asset_urn = register_result['value']['asset']
+            
+            # Step 2: Download image
+            img_response = requests.get(image_url, timeout=30)
+            img_response.raise_for_status()
+            image_data = img_response.content
+            
+            # Step 3: Upload image binary
+            upload_headers = {
+                "Authorization": f"Bearer {self.access_token}",
+            }
+            
+            upload_response = requests.put(upload_url, headers=upload_headers, data=image_data, timeout=60)
+            upload_response.raise_for_status()
+            
+            print(f"✓ Uploaded image to LinkedIn: {asset_urn}")
+            return asset_urn
+            
+        except Exception as e:
+            print(f"Error uploading image to LinkedIn: {e}")
+            return None
 

@@ -41,6 +41,9 @@ data/
 *.sqlite
 *.sqlite3
 
+# Generated images (keep data/images/ in gitignore but allow data/ directory)
+# Images are regenerated automatically, no need to commit
+
 # Logs
 logs/
 *.log

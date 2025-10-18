@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from config import Config
 from scheduler import PostScheduler
+from image_generator import ImageGenerator
 
 
 class Database:
@@ -16,6 +17,7 @@ class Database:
         """Initialize database connection."""
         self.db_path = db_path or Config.DATABASE_PATH
         self.scheduler = PostScheduler()
+        self.image_generator = ImageGenerator() if Config.GENERATE_IMAGES else None
         self.init_database()
     
     def init_database(self):
@@ -43,6 +45,7 @@ class Database:
                     blog_post_id INTEGER NOT NULL,
                     message_index INTEGER NOT NULL,
                     message_text TEXT NOT NULL,
+                    image_url TEXT,
                     scheduled_for TEXT,
                     posted_to_linkedin BOOLEAN DEFAULT 0,
                     posted_to_x BOOLEAN DEFAULT 0,
@@ -92,13 +95,25 @@ class Database:
                 existing_schedules=existing_schedules
             )
             
-            # Insert messages with scheduled times
+            # Insert messages with scheduled times and generate images
             for idx, (message, scheduled_time) in enumerate(zip(messages, scheduled_times)):
+                # Generate image if enabled
+                image_url = None
+                if self.image_generator and Config.GENERATE_IMAGES:
+                    try:
+                        image_url = self.image_generator.generate_image_for_message(
+                            blog_title=title,
+                            message_text=message,
+                            message_id=None  # Will get actual ID after insert
+                        )
+                    except Exception as e:
+                        print(f"Warning: Image generation failed for message {idx}: {e}")
+                
                 cursor.execute("""
                     INSERT INTO posted_messages 
-                    (blog_post_id, message_index, message_text, scheduled_for)
-                    VALUES (?, ?, ?, ?)
-                """, (post_id, idx, message, scheduled_time.isoformat()))
+                    (blog_post_id, message_index, message_text, image_url, scheduled_for)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (post_id, idx, message, image_url, scheduled_time.isoformat()))
             
             conn.commit()
             
@@ -119,6 +134,7 @@ class Database:
                     pm.blog_post_id,
                     pm.message_index,
                     pm.message_text,
+                    pm.image_url,
                     pm.scheduled_for,
                     pm.posted_to_linkedin,
                     pm.posted_to_x,
@@ -147,11 +163,12 @@ class Database:
                 'blog_post_id': row[1],
                 'message_index': row[2],
                 'message_text': row[3],
-                'scheduled_for': row[4],
-                'posted_to_linkedin': bool(row[5]),
-                'posted_to_x': bool(row[6]),
-                'blog_title': row[7],
-                'blog_url': row[8]
+                'image_url': row[4],
+                'scheduled_for': row[5],
+                'posted_to_linkedin': bool(row[6]),
+                'posted_to_x': bool(row[7]),
+                'blog_title': row[8],
+                'blog_url': row[9]
             }
     
     def mark_posted_to_linkedin(self, message_id: int):

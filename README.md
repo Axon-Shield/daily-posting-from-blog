@@ -46,10 +46,12 @@ This system automatically transforms your long-form blog content into daily soci
 
 ### Cost Estimate
 
-- **Anthropic API**: ~$0.01-0.05 per blog post processed
+- **Anthropic API (Claude)**: ~$0.01-0.05 per blog post processed
+- **xAI Grok API (Images)**: $0.35 per blog post (5 images × $0.07/image)
 - **GitHub Actions**: Free (within GitHub's generous free tier)
 - **Storage**: Negligible (SQLite database)
-- **Total**: Extremely cost-effective for automated social media management
+- **Total Monthly** (4 blog posts): ~$1.50-1.70
+- **Total Yearly**: ~$18-20 for fully automated social media with custom AI-generated images
 
 ### Key Benefits
 
@@ -62,19 +64,22 @@ This system automatically transforms your long-form blog content into daily soci
 ## 🌟 Features
 
 - **RSS Feed Integration**: Automatically fetch new blog posts from your RSS feed
-- **AI-Powered Content Extraction**: Use Anthropic's Claude to extract 7 key messaging points from each blog post
-- **Multi-Platform Posting**: Automatically post to LinkedIn and X (Twitter)
-- **Daily Automation**: GitHub Actions workflow posts one message per day
+- **AI-Powered Content Extraction**: Use Anthropic's Claude to extract 5-7 key messaging points from each blog post
+- **🎨 AI Image Generation**: Automatically generate professional images for each post using xAI's Grok
+- **Multi-Platform Posting**: Automatically post to LinkedIn and X (Twitter) with images
+- **Intelligent Scheduling**: Posts scheduled across business days, avoiding weekends and US holidays
+- **Daily Automation**: GitHub Actions workflow posts messages at optimal times (9am, 11am, 1pm, 3pm EST)
 - **Smart Tracking**: SQLite database tracks posted messages to avoid duplicates
 - **Platform Optimization**: Messages are tailored for each platform's format and character limits
 
 ## 📋 Requirements
 
 - Python 3.11+
-- Blog with RSS feed
-- Anthropic API key
-- LinkedIn API credentials
-- X (Twitter) API credentials
+- Blog with RSS feed (RSS, Atom, or JSON Feed)
+- Anthropic API key (for content extraction with Claude)
+- xAI Grok API key (for image generation, optional but recommended)
+- LinkedIn API credentials (for LinkedIn posting)
+- X (Twitter) API credentials (for X posting)
 - GitHub account (for automation)
 
 ## 🚀 Quick Start

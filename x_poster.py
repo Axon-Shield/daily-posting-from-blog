@@ -2,6 +2,9 @@
 X (Twitter) posting module.
 """
 import tweepy
+import requests
+import tempfile
+import os
 from typing import Dict, Optional
 from config import Config
 
@@ -32,12 +35,13 @@ class XPoster:
         self._init_client()
     
     def _init_client(self):
-        """Initialize Tweepy client."""
+        """Initialize Tweepy client and API (v1.1 for media upload)."""
         if not all([self.api_key, self.api_secret, self.access_token, self.access_token_secret]):
             print("Warning: X (Twitter) credentials not fully configured")
             return
         
         try:
+            # Client for v2 API (creating tweets)
             self.client = tweepy.Client(
                 bearer_token=self.bearer_token,
                 consumer_key=self.api_key,
@@ -46,15 +50,27 @@ class XPoster:
                 access_token_secret=self.access_token_secret,
                 wait_on_rate_limit=True
             )
+            
+            # API v1.1 for media upload
+            auth = tweepy.OAuth1UserHandler(
+                self.api_key,
+                self.api_secret,
+                self.access_token,
+                self.access_token_secret
+            )
+            self.api = tweepy.API(auth)
+            
         except Exception as e:
             print(f"Error initializing X client: {e}")
+            self.api = None
     
-    def post(self, text: str) -> Dict:
+    def post(self, text: str, image_url: Optional[str] = None) -> Dict:
         """
-        Post a tweet to X.
+        Post a tweet to X with optional image.
         
         Args:
             text: The text content to tweet (max 280 characters)
+            image_url: Optional URL of image to attach
             
         Returns:
             Dictionary with response information
@@ -67,7 +83,16 @@ class XPoster:
             text = text[:277] + "..."
         
         try:
-            response = self.client.create_tweet(text=text)
+            # Upload media if provided
+            media_id = None
+            if image_url and self.api:
+                media_id = self._upload_image(image_url)
+            
+            # Create tweet with or without media
+            if media_id:
+                response = self.client.create_tweet(text=text, media_ids=[media_id])
+            else:
+                response = self.client.create_tweet(text=text)
             
             return {
                 "success": True,
@@ -99,4 +124,42 @@ class XPoster:
             return me.data is not None
         except:
             return False
+    
+    def _upload_image(self, image_url: str) -> Optional[str]:
+        """
+        Upload image to X and return media ID.
+        
+        Args:
+            image_url: URL of image to upload
+            
+        Returns:
+            Media ID string if successful, None otherwise
+        """
+        if not self.api:
+            print("Warning: X API v1.1 not initialized, cannot upload media")
+            return None
+        
+        try:
+            # Download image to temporary file
+            response = requests.get(image_url, timeout=30)
+            response.raise_for_status()
+            
+            # Save to temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
+                tmp_file.write(response.content)
+                tmp_path = tmp_file.name
+            
+            try:
+                # Upload to X using v1.1 API
+                media = self.api.media_upload(filename=tmp_path)
+                print(f"✓ Uploaded image to X: {media.media_id}")
+                return str(media.media_id)
+            finally:
+                # Clean up temporary file
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            
+        except Exception as e:
+            print(f"Error uploading image to X: {e}")
+            return None
 

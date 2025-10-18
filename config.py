@@ -17,6 +17,10 @@ class Config:
     # Anthropic API Configuration
     ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
     
+    # xAI Grok API Configuration (for image generation)
+    XAI_API_KEY = os.getenv('XAI_API_KEY')
+    GENERATE_IMAGES = os.getenv('GENERATE_IMAGES', 'true').lower() == 'true'
+    
     # LinkedIn Configuration
     LINKEDIN_ACCESS_TOKEN = os.getenv('LINKEDIN_ACCESS_TOKEN')
     LINKEDIN_USER_ID = os.getenv('LINKEDIN_USER_ID')
