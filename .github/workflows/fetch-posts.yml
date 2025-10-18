@@ -3,8 +3,10 @@ name: Fetch New Blog Posts
 on:
   schedule:
     # Run daily at 11:30 AM UK time
-    # GMT period (Oct-Mar): 11:30 AM UTC = 11:30 AM UK time
-    - cron: '30 11 * 10-3 *'
+    # GMT period (Oct-Dec): 11:30 AM UTC = 11:30 AM UK time
+    - cron: '30 11 * 10-12 *'
+    # GMT period (Jan-Mar): 11:30 AM UTC = 11:30 AM UK time
+    - cron: '30 11 * 1-3 *'
     # BST period (Apr-Sep): 10:30 AM UTC = 11:30 AM UK time  
     - cron: '30 10 * 4-9 *'
   
