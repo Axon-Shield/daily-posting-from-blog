@@ -11,16 +11,20 @@ from config import Config
 class LinkedInPoster:
     """Post content to LinkedIn."""
     
-    def __init__(self, access_token: str = None, user_id: str = None):
+    def __init__(self, access_token: str = None, user_id: str = None, org_id: str = None, post_as_org: bool = None):
         """
         Initialize LinkedIn poster.
         
         Args:
             access_token: LinkedIn API access token
             user_id: LinkedIn user ID (URN format)
+            org_id: LinkedIn organization ID (for posting as company)
+            post_as_org: If True, post as organization; if False, post as person
         """
         self.access_token = access_token or Config.LINKEDIN_ACCESS_TOKEN
         self.user_id = user_id or Config.LINKEDIN_USER_ID
+        self.org_id = org_id or Config.LINKEDIN_ORG_ID
+        self.post_as_org = post_as_org if post_as_org is not None else Config.LINKEDIN_POST_AS_ORG
         self.api_base = "https://api.linkedin.com/v2"
     
     def post(self, text: str, image_url: Optional[str] = None) -> Dict:
@@ -34,8 +38,20 @@ class LinkedInPoster:
         Returns:
             Dictionary with response information
         """
-        if not self.access_token or not self.user_id:
-            raise ValueError("LinkedIn credentials not configured")
+        if not self.access_token:
+            raise ValueError("LinkedIn access token not configured")
+        
+        # Determine author URN (person or organization)
+        if self.post_as_org:
+            if not self.org_id:
+                raise ValueError("LinkedIn organization ID not configured")
+            author_urn = f"urn:li:organization:{self.org_id}"
+            print(f"Posting as organization: {self.org_id}")
+        else:
+            if not self.user_id:
+                raise ValueError("LinkedIn user ID not configured")
+            author_urn = f"urn:li:person:{self.user_id}"
+            print(f"Posting as person: {self.user_id}")
         
         headers = {
             "Authorization": f"Bearer {self.access_token}",
@@ -45,7 +61,7 @@ class LinkedInPoster:
         
         # Prepare the post data
         post_data = {
-            "author": f"urn:li:person:{self.user_id}",
+            "author": author_urn,
             "lifecycleState": "PUBLISHED",
             "specificContent": {
                 "com.linkedin.ugc.ShareContent": {
@@ -140,10 +156,16 @@ class LinkedInPoster:
         try:
             # Step 1: Register upload
             register_upload_url = f"{self.api_base}/assets?action=registerUpload"
+            # Determine owner URN (person or organization)
+            if self.post_as_org:
+                owner_urn = f"urn:li:organization:{self.org_id}"
+            else:
+                owner_urn = f"urn:li:person:{self.user_id}"
+            
             register_data = {
                 "registerUploadRequest": {
                     "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
-                    "owner": f"urn:li:person:{self.user_id}",
+                    "owner": owner_urn,
                     "serviceRelationships": [{
                         "relationshipType": "OWNER",
                         "identifier": "urn:li:userGeneratedContent"
