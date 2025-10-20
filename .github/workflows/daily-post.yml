@@ -82,10 +82,17 @@ jobs:
       run: |
         python main.py --post-daily
     
-    - name: Upload database as artifact
+    - name: Upload database as artifact (canonical)
       uses: actions/upload-artifact@v4
       with:
         name: posts-database
+        path: data/posts.db
+        retention-days: 90
+    
+    - name: Upload database as artifact (latest alias)
+      uses: actions/upload-artifact@v4
+      with:
+        name: posts-database-latest
         path: data/posts.db
         retention-days: 90
 

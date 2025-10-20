@@ -95,10 +95,17 @@ jobs:
         echo "=== Database Status AFTER Clearing ==="
         python main.py --status
     
-    - name: Upload updated database as artifact
+    - name: Upload updated database as artifact (canonical)
       uses: actions/upload-artifact@v4
       with:
         name: posts-database
+        path: data/posts.db
+        retention-days: 90
+    
+    - name: Upload updated database as artifact (latest alias)
+      uses: actions/upload-artifact@v4
+      with:
+        name: posts-database-latest
         path: data/posts.db
         retention-days: 90
     
