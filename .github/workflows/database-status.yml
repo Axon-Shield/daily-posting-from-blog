@@ -29,20 +29,62 @@ jobs:
     
     - name: Create data directory
       run: mkdir -p data
-    
+
     - name: Remove any stale local database
       run: |
         rm -f data/posts.db || true
-    
-    - name: Download latest posts-database artifact (global search)
-      uses: dawidd6/action-download-artifact@v3
+
+    - name: Get latest successful run id (fetch-posts)
+      id: get_run_fetch
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const runs = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'fetch-posts.yml',
+            branch: 'main',
+            per_page: 20,
+            status: 'success'
+          });
+          const run = runs.data.workflow_runs && runs.data.workflow_runs[0];
+          core.setOutput('run_id', run ? String(run.id) : '');
+
+    - name: Download database artifact from fetch-posts
+      if: steps.get_run_fetch.outputs.run_id != ''
+      uses: actions/download-artifact@v4
       with:
         name: posts-database
         path: data/
-        search_artifacts: true
-        if_no_artifact_found: warn
+        run-id: ${{ steps.get_run_fetch.outputs.run_id }}
       continue-on-error: true
-    
+
+    - name: Get latest successful run id (daily-post)
+      id: get_run_daily
+      if: steps.get_run_fetch.outputs.run_id == ''
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const runs = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'daily-post.yml',
+            branch: 'main',
+            per_page: 20,
+            status: 'success'
+          });
+          const run = runs.data.workflow_runs && runs.data.workflow_runs[0];
+          core.setOutput('run_id', run ? String(run.id) : '');
+
+    - name: Download database artifact from daily-post (fallback)
+      if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id != ''
+      uses: actions/download-artifact@v4
+      with:
+        name: posts-database
+        path: data/
+        run-id: ${{ steps.get_run_daily.outputs.run_id }}
+      continue-on-error: true
+
     - name: Show database status
       env:
         BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
@@ -103,7 +145,7 @@ jobs:
               substr(pm.message_text, 1, 60) || '...' as preview
             FROM posted_messages pm
             JOIN blog_posts bp ON pm.blog_post_id = bp.id
-            WHERE pm.posted_at IS NULL OR (pm.posted_to_linkedin = 0 OR pm.posted_to_x = 0)
+            WHERE pm.posted_at IS NULL OR (pm.posted_to_linkedin = 0 OR pm.posted_to_x == 0)
             ORDER BY pm.scheduled_for ASC
           " -header -column || echo "No unpublished messages found"
           echo ""
