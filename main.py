@@ -131,7 +131,7 @@ class BlogPostAutomation:
         print(f"\nBase Message:\n{message_data['message_text']}\n")
         
         # Post to LinkedIn
-        if Config.LINKEDIN_ENABLED and not message_data['posted_to_linkedin'] and Config.LINKEDIN_ACCESS_TOKEN:
+        if Config.LINKEDIN_ENABLED and not message_data['posted_to_linkedin'] and Config.LINKEDIN_ACCESS_TOKEN and not os.getenv('TEST_MODE', '').lower() == 'true':
             print("\n--- Posting to LinkedIn ---")
             try:
                 # Enhance message for LinkedIn
@@ -154,6 +154,8 @@ class BlogPostAutomation:
             
             except Exception as e:
                 print(f"✗ Error posting to LinkedIn: {e}")
+        elif os.getenv('TEST_MODE', '').lower() == 'true':
+            print("⊘ LinkedIn posting disabled in TEST_MODE")
         elif not Config.LINKEDIN_ENABLED:
             print("⊘ LinkedIn posting disabled (set LINKEDIN_ENABLED=true to enable)")
         else:
