@@ -123,7 +123,11 @@ jobs:
         DB_CANDIDATE=$(find data -maxdepth 2 -type f -name "*.db" | head -n1 || true)
         if [ -n "$DB_CANDIDATE" ]; then
           echo "Found DB candidate: $DB_CANDIDATE"
-          cp "$DB_CANDIDATE" data/posts.db
+          if [ "$DB_CANDIDATE" != "data/posts.db" ]; then
+            cp "$DB_CANDIDATE" data/posts.db
+          else
+            echo "Database already in correct location: data/posts.db"
+          fi
         else
           echo "No .db file found in downloaded artifacts"
         fi
