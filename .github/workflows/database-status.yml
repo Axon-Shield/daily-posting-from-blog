@@ -67,22 +67,14 @@ jobs:
           });
           console.log('Artifacts in fetch-posts run:', arts.data.artifacts.map(a => `${a.name} (${a.size_in_bytes} bytes)`));
 
-    - name: Download database artifact from fetch-posts
-      if: steps.get_run_fetch.outputs.run_id != ''
-      uses: actions/download-artifact@v4
-      with:
-        name: posts-database
-        path: data/
-        run-id: ${{ steps.get_run_fetch.outputs.run_id }}
-      continue-on-error: true
-
-    - name: Fallback download by pattern from fetch-posts
+    - name: Download DB artifacts from fetch-posts by pattern
       if: steps.get_run_fetch.outputs.run_id != ''
       uses: actions/download-artifact@v4
       with:
         pattern: posts-*
         path: data/
         run-id: ${{ steps.get_run_fetch.outputs.run_id }}
+        merge-multiple: true
       continue-on-error: true
 
     - name: Get latest successful run id (daily-post)
@@ -116,28 +108,27 @@ jobs:
           });
           console.log('Artifacts in daily-post run:', arts.data.artifacts.map(a => `${a.name} (${a.size_in_bytes} bytes)`));
 
-    - name: Download database artifact from daily-post (fallback)
-      if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id != ''
-      uses: actions/download-artifact@v4
-      with:
-        name: posts-database
-        path: data/
-        run-id: ${{ steps.get_run_daily.outputs.run_id }}
-      continue-on-error: true
-
-    - name: Fallback download by pattern from daily-post
+    - name: Download DB artifacts from daily-post by pattern (fallback)
       if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id != ''
       uses: actions/download-artifact@v4
       with:
         pattern: posts-*
         path: data/
         run-id: ${{ steps.get_run_daily.outputs.run_id }}
+        merge-multiple: true
       continue-on-error: true
 
-    - name: List downloaded files
+    - name: Normalize downloaded DB filename
       run: |
-        echo "Workspace:" && pwd
-        echo "Files in data/:" && ls -lah data || true
+        echo "Files in data before normalization:" && ls -lah data || true
+        DB_CANDIDATE=$(find data -maxdepth 2 -type f -name "*.db" | head -n1 || true)
+        if [ -n "$DB_CANDIDATE" ]; then
+          echo "Found DB candidate: $DB_CANDIDATE"
+          cp "$DB_CANDIDATE" data/posts.db
+        else
+          echo "No .db file found in downloaded artifacts"
+        fi
+        echo "Files in data after normalization:" && ls -lah data || true
 
     - name: Show database status
       env:
