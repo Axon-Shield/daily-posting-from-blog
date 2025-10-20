@@ -51,13 +51,6 @@ jobs:
         if_no_artifact_found: ignore
       continue-on-error: true
     
-    - name: Fix database schema (add image_url column if missing)
-      if: always()
-      env:
-        DATABASE_PATH: ./data/posts.db
-      run: |
-        python fix_database_schema.py
-    
     - name: Show database status
       env:
         BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
