@@ -48,10 +48,18 @@ class BlogPostAutomation:
         print("="*60, flush=True)
         print(f"RSS Feed: {Config.BLOG_RSS_FEED_URL[:50]}...", flush=True)
         print(f"Cutoff Date: {Config.MINIMUM_POST_DATE}", flush=True)
+        
+        # Determine limit for blog posts per run
+        limit = Config.MAX_BLOG_POSTS_PER_RUN if Config.MAX_BLOG_POSTS_PER_RUN > 0 else 5
+        if Config.MAX_BLOG_POSTS_PER_RUN > 0:
+            print(f"Blog Post Limit: {limit} posts per run", flush=True)
+        else:
+            print(f"Blog Post Limit: Unlimited (using default limit of {limit})", flush=True)
+        
         print("Fetching latest blog posts...", flush=True)
         sys.stdout.flush()
         
-        posts = self.rss_parser.fetch_latest_posts(limit=5)
+        posts = self.rss_parser.fetch_latest_posts(limit=limit)
         
         if not posts:
             print("No posts found in RSS feed.")

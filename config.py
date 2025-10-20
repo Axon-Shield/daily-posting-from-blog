@@ -44,6 +44,7 @@ class Config:
     # Schedule Configuration
     POSTS_PER_BLOG = int(os.getenv('POSTS_PER_BLOG', 5))
     MAX_SCHEDULE_DAYS_AHEAD = int(os.getenv('MAX_SCHEDULE_DAYS_AHEAD', 7))
+    MAX_BLOG_POSTS_PER_RUN = int(os.getenv('MAX_BLOG_POSTS_PER_RUN', 0))  # 0 = unlimited
     
     # Date Filtering Configuration
     MINIMUM_POST_DATE = os.getenv('MINIMUM_POST_DATE', '2025-09-24')

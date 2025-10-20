@@ -106,6 +106,7 @@ jobs:
         MAX_SCHEDULE_DAYS_AHEAD: ${{ secrets.MAX_SCHEDULE_DAYS_AHEAD || '7' }}
         DATABASE_PATH: ./data/posts.db
         POSTS_PER_BLOG: ${{ secrets.POSTS_PER_BLOG || 5 }}
+        MAX_BLOG_POSTS_PER_RUN: ${{ secrets.MAX_BLOG_POSTS_PER_RUN || 0 }}
         IMAGE_OUTPUT_DIR: ./artifacts/images
         PYTHONUNBUFFERED: 1
       run: |
