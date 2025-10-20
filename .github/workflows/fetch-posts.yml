@@ -68,17 +68,10 @@ jobs:
         path: artifacts/images
         if-no-files-found: ignore
     
-    - name: Upload database as artifact (canonical)
+    - name: Upload database as artifact
       uses: actions/upload-artifact@v4
       with:
         name: posts-database
-        path: data/posts.db
-        retention-days: 90
-    
-    - name: Upload database as artifact (latest alias)
-      uses: actions/upload-artifact@v4
-      with:
-        name: posts-database-latest
         path: data/posts.db
         retention-days: 90
     

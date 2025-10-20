@@ -75,7 +75,6 @@ jobs:
       run: |
         echo "Downloading artifacts from run ${{ steps.get_run_fetch.outputs.run_id }}"
         gh run download ${{ steps.get_run_fetch.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
-        gh run download ${{ steps.get_run_fetch.outputs.run_id }} --name posts-database-latest --dir data/ || echo "posts-database-latest not found"
       continue-on-error: true
 
     - name: Get latest successful run id (daily-post)
@@ -116,7 +115,6 @@ jobs:
       run: |
         echo "Downloading artifacts from daily-post run ${{ steps.get_run_daily.outputs.run_id }}"
         gh run download ${{ steps.get_run_daily.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
-        gh run download ${{ steps.get_run_daily.outputs.run_id }} --name posts-database-latest --dir data/ || echo "posts-database-latest not found"
       continue-on-error: true
 
     - name: Normalize downloaded DB filename
