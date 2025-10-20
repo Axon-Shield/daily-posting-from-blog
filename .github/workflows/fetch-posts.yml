@@ -16,6 +16,9 @@ on:
 jobs:
   fetch-posts:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
     
     steps:
     - name: Checkout repository
