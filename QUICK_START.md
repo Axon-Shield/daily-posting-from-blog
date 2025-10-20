@@ -5,7 +5,7 @@
 ## 🎯 What You're Building
 
 An automated system that:
-1. Reads your weekly blog posts via RSS
+1. Reads your blog posts via RSS/JSON feed daily
 2. Extracts 7 key messaging points using AI (Anthropic Claude)
 3. Posts one message daily to LinkedIn and X (Twitter)
 4. Runs automatically via GitHub Actions
@@ -80,7 +80,7 @@ Add these secrets:
 ## ✅ Success!
 
 Your automation is now live! It will:
-- **Weekly**: Fetch new posts (Mondays 8 AM UTC)
+- **Daily**: Fetch new posts (11:30 AM UK time / 7:30 AM EST)
 - **Daily**: Post messages (Daily 9 AM UTC)
 
 ## 🎛️ Customization

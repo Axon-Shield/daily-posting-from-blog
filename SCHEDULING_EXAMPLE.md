@@ -141,7 +141,7 @@ Total: 15 messages posted over 5 business days
 - Spreads throughout business hours
 - Professional, not overwhelming
 
-**Weekly Pattern:**
+**Publication Pattern:**
 - If you publish 3 posts in one burst (like this example)
 - Social media spreads them over 1 work week (5 business days)
 - Creates consistent daily presence
@@ -219,7 +219,7 @@ Edit `scheduler.py`:
 MAX_POSTS_PER_DAY = 3  # Reduce from 4 to 3
 ```
 
-## Real-World Example: Weekly Blog Cadence
+## Real-World Example: Regular Blog Cadence
 
 **Your Publishing Schedule:**
 - Every Monday: Publish 1 new blog post

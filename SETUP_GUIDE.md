@@ -400,7 +400,7 @@ Or check GitHub Actions:
 2. Look for green checkmarks (success) or red X's (failure)
 3. Click on any run to see detailed logs
 
-### Weekly Maintenance
+### Daily Automated Checks
 
 1. Review posted content quality
 2. Check remaining message count

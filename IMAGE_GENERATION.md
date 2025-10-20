@@ -99,7 +99,7 @@ CREATE TABLE posted_messages (
 
 ## Workflow
 
-### When Fetching Posts (Weekly)
+### When Fetching Posts (Daily)
 
 ```
 1. Fetch blog post from RSS feed

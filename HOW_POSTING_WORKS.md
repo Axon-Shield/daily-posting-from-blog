@@ -11,7 +11,7 @@
 
 ### Phase 1: Creating the Schedule (One-Time)
 
-**When:** You run `--fetch-posts` (weekly, or manually)
+**When:** You run `--fetch-posts` (daily via GitHub Actions, or manually)
 
 **What Happens:**
 ```

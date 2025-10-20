@@ -1,6 +1,6 @@
 # 📝 Automated Blog Post Distribution System
 
-Automatically distribute key messaging points from your weekly blog posts to LinkedIn and X (Twitter) on a daily basis using AI-powered content extraction.
+Automatically distribute key messaging points from your blog posts to LinkedIn and X (Twitter) on a daily basis using AI-powered content extraction.
 
 ## 🎯 Executive Summary
 
@@ -11,7 +11,7 @@ This system automatically transforms your long-form blog content into daily soci
 1. **Fetches Content**: Reads your blog posts from your RSS/JSON feed (supports RSS, Atom, and JSON Feed formats)
 2. **AI Extraction**: Uses Claude Sonnet 4.5 to intelligently extract 7 key messaging points from each blog post
 3. **Smart Scheduling**: Distributes these messages daily across LinkedIn and X (Twitter) over the course of a week
-4. **Automated Posting**: GitHub Actions runs automatically - weekly to fetch new posts, daily to publish messages
+4. **Automated Posting**: GitHub Actions runs automatically - daily to fetch new posts and publish messages
 5. **Tracks Everything**: SQLite database ensures no duplicate posts and maintains posting history
 
 ### Current Configuration (Axon-Shield)
@@ -37,7 +37,7 @@ This system automatically transforms your long-form blog content into daily soci
 ### What Happens Next
 
 **Without Social Media Credentials:**
-- System will fetch new blog posts weekly ✅
+- System will fetch new blog posts daily (duplicates automatically prevented) ✅
 - AI will extract daily messages ✅
 - Posts won't be published to social media (credentials needed) ⏸️
 
@@ -212,8 +212,8 @@ The system includes two GitHub Actions workflows:
 - Posts one message to LinkedIn and X
 - Can be triggered manually from GitHub Actions tab
 
-#### 2. **Weekly Post Fetching** (`.github/workflows/fetch-posts.yml`)
-- Runs weekly on Mondays at 8:00 AM UTC
+#### 2. **Daily Post Fetching** (`.github/workflows/fetch-posts.yml`)
+- Runs daily at 11:30 AM UK time (7:30 AM EST)
 - Fetches new blog posts and extracts messages
 - Can be triggered manually from GitHub Actions tab
 
@@ -265,7 +265,7 @@ daily-posting-from-blog/
 ├── .github/
 │   └── workflows/
 │       ├── daily-post.yml      # Daily posting workflow
-│       └── fetch-posts.yml     # Weekly fetch workflow
+│       └── fetch-posts.yml     # Daily fetch workflow
 ├── config.py                   # Configuration management
 ├── database.py                 # SQLite database operations
 ├── rss_parser.py              # RSS feed parsing
@@ -358,6 +358,17 @@ Output shows:
 1. Go to repository → Actions tab
 2. Click on a workflow run
 3. View detailed logs for each step
+
+## 📚 Documentation
+
+- **[QUICK_START.md](QUICK_START.md)** - 10-minute setup guide
+- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Detailed API configuration
+- **[GITHUB_SETUP.md](GITHUB_SETUP.md)** - GitHub repository setup
+- **[SCHEDULING.md](SCHEDULING.md)** - Intelligent scheduling system
+- **[IMAGE_GENERATION.md](IMAGE_GENERATION.md)** - AI image generation with Grok
+- **[HOW_POSTING_WORKS.md](HOW_POSTING_WORKS.md)** - System architecture
+- **[GITHUB_ACTIONS_LIMITS.md](GITHUB_ACTIONS_LIMITS.md)** - Usage limits & restrictions
+- **[TESTING.md](TESTING.md)** - Testing workflows
 
 ## 🔐 Security Notes
 

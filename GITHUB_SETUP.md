@@ -229,7 +229,7 @@ See `SETUP_GUIDE.md` for detailed instructions on obtaining:
 **Ready to automate!** 🚀
 
 Once everything is set up, the system will:
-- Fetch new blog posts weekly (Mondays 8 AM UTC)
+- Fetch new blog posts daily (11:30 AM UK time / 7:30 AM EST)
 - Post daily messages (Daily 9 AM UTC)
 - Track all posts in database
 - Never duplicate posts
