@@ -26,6 +26,11 @@ jobs:
       run: |
         mkdir -p data
     
+    - name: Fix database schema (if database exists)
+      run: |
+        python fix_database_schema.py
+      continue-on-error: true
+    
     - name: Run real-world X posting test
       env:
         BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}

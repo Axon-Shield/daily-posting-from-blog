@@ -42,6 +42,11 @@ jobs:
         path: data/
       continue-on-error: true
     
+    - name: Fix database schema (add image_url column if missing)
+      run: |
+        python fix_database_schema.py
+      continue-on-error: true
+    
     - name: Fetch and process new posts
       env:
         BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
