@@ -77,7 +77,7 @@ jobs:
       continue-on-error: true
 
     - name: Fallback download by pattern from fetch-posts
-      if: steps.get_run_fetch.outputs.run_id != '' && !exists('data/posts.db')
+      if: steps.get_run_fetch.outputs.run_id != ''
       uses: actions/download-artifact@v4
       with:
         pattern: posts-*
@@ -126,7 +126,7 @@ jobs:
       continue-on-error: true
 
     - name: Fallback download by pattern from daily-post
-      if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id != '' && !exists('data/posts.db')
+      if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id != ''
       uses: actions/download-artifact@v4
       with:
         pattern: posts-*
