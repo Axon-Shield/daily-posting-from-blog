@@ -20,19 +20,36 @@ class BlogPostAutomation:
     
     def __init__(self):
         """Initialize the automation system."""
-        # Validate configuration
+        print("Initializing automation system...", flush=True)
+        
+        print("Validating configuration...", flush=True)
         Config.validate()
         
-        # Initialize components
+        print("Initializing database...", flush=True)
         self.db = Database()
+        
+        print("Initializing RSS parser...", flush=True)
         self.rss_parser = RSSParser()
+        
+        print("Initializing content extractor (Anthropic)...", flush=True)
         self.content_extractor = ContentExtractor()
+        
+        print("Initializing social media posters...", flush=True)
         self.linkedin_poster = LinkedInPoster()
         self.x_poster = XPoster()
+        
+        print("✅ Initialization complete!", flush=True)
     
     def fetch_and_process_new_posts(self):
         """Fetch new blog posts and extract messaging points."""
-        print("Fetching latest blog posts...")
+        print("\n" + "="*60, flush=True)
+        print("FETCHING NEW BLOG POSTS", flush=True)
+        print("="*60, flush=True)
+        print(f"RSS Feed: {Config.BLOG_RSS_FEED_URL[:50]}...", flush=True)
+        print(f"Cutoff Date: {Config.MINIMUM_POST_DATE}", flush=True)
+        print("Fetching latest blog posts...", flush=True)
+        sys.stdout.flush()
+        
         posts = self.rss_parser.fetch_latest_posts(limit=5)
         
         if not posts:
@@ -291,6 +308,11 @@ class BlogPostAutomation:
 
 def main():
     """Main entry point."""
+    print("="*60, flush=True)
+    print("BLOG POST AUTOMATION STARTING", flush=True)
+    print("="*60, flush=True)
+    sys.stdout.flush()
+    
     parser = argparse.ArgumentParser(
         description='Automated blog post distribution to social media',
         formatter_class=argparse.RawDescriptionHelpFormatter,

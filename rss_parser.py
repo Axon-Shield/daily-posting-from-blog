@@ -29,12 +29,17 @@ class RSSParser:
             List of dictionaries containing post information
         """
         try:
+            print(f"Fetching from: {self.feed_url}", flush=True)
+            
             # Check if this is a JSON feed by URL or content type
             if self.feed_url.endswith('.json'):
+                print("Detected JSON feed format", flush=True)
                 return self._fetch_json_feed(limit)
             
             # Try parsing with feedparser (supports RSS, Atom, and JSON Feed)
+            print("Parsing feed with feedparser...", flush=True)
             feed = feedparser.parse(self.feed_url)
+            print("Feed parsed successfully", flush=True)
             
             # Check for errors
             if hasattr(feed, 'bozo') and feed.bozo:
@@ -65,7 +70,9 @@ class RSSParser:
             List of dictionaries containing post information
         """
         try:
+            print(f"Making HTTP request to JSON feed (timeout: 30s)...", flush=True)
             response = requests.get(self.feed_url, timeout=30)
+            print(f"Response status: {response.status_code}", flush=True)
             response.raise_for_status()
             
             feed_data = response.json()
