@@ -149,7 +149,7 @@ jobs:
                 WHEN pm.posted_to_x = 1 THEN '𝕏 X Only'
                 ELSE '⏳ Pending'
               END as status,
-              substr(pm.message_text, 1, 60) || '...' as preview
+              pm.message_text as preview
             FROM posted_messages pm
             JOIN blog_posts bp ON pm.blog_post_id = bp.id
             WHERE pm.posted_at IS NULL OR (pm.posted_to_linkedin = 0 OR pm.posted_to_x = 0)
