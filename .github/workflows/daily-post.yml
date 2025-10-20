@@ -90,7 +90,7 @@ jobs:
         X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
         X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
         DATABASE_PATH: ./data/posts.db
-        POSTS_PER_BLOG: 5
+        POSTS_PER_BLOG: ${{ secrets.POSTS_PER_BLOG || 5 }}
         IMAGE_OUTPUT_DIR: ./artifacts/images
         TEST_MODE: ${{ secrets.TEST_MODE || 'false' }}
       run: |
