@@ -128,9 +128,16 @@ Return ONLY the image prompt, nothing else."""
                 return None
         
         except requests.exceptions.RequestException as e:
-            print(f"Error generating image: {e}")
             if hasattr(e, 'response') and e.response is not None:
-                print(f"Response body: {e.response.text}")
+                response_text = e.response.text
+                if "Account needs top-up" in response_text:
+                    print("❌ xAI API Error: Account needs top-up")
+                    print("   Please add credits to your xAI account at https://x.ai/api")
+                else:
+                    print(f"Error generating image: {e}")
+                    print(f"Response body: {response_text}")
+            else:
+                print(f"Error generating image: {e}")
             return None
         except Exception as e:
             print(f"Error generating image: {e}")
