@@ -118,17 +118,19 @@ class Database:
             
             # Insert messages with scheduled times and generate images
             for idx, (message, scheduled_time) in enumerate(zip(messages, scheduled_times)):
-                # Generate image if enabled
+                # Generate image based on probability
                 image_url = None
-                if self.image_generator and Config.GENERATE_IMAGES:
-                    try:
-                        image_url = self.image_generator.generate_image_for_message(
-                            blog_title=title,
-                            message_text=message,
-                            message_id=None  # Will get actual ID after insert
-                        )
-                    except Exception as e:
-                        print(f"Warning: Image generation failed for message {idx}: {e}")
+                if self.image_generator and Config.GENERATE_IMAGES > 0:
+                    import random
+                    if random.random() < Config.GENERATE_IMAGES:
+                        try:
+                            image_url = self.image_generator.generate_image_for_message(
+                                blog_title=title,
+                                message_text=message,
+                                message_id=None  # Will get actual ID after insert
+                            )
+                        except Exception as e:
+                            print(f"Warning: Image generation failed for message {idx}: {e}")
                 
                 cursor.execute("""
                     INSERT INTO posted_messages 

@@ -19,7 +19,8 @@ class Config:
     
     # xAI Grok API Configuration (for image generation)
     XAI_API_KEY = os.getenv('XAI_API_KEY')
-    GENERATE_IMAGES = os.getenv('GENERATE_IMAGES', 'true').lower() == 'true'
+    # Image generation probability (0.0 = never, 1.0 = always)
+    GENERATE_IMAGES = max(0.0, min(1.0, float(os.getenv('GENERATE_IMAGES', '1.0'))))
     # Where to write generated images during CI runs; used for artifact upload
     IMAGE_OUTPUT_DIR = os.getenv('IMAGE_OUTPUT_DIR', './artifacts/images')
     

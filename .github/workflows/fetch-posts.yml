@@ -101,7 +101,7 @@ jobs:
         BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-        GENERATE_IMAGES: ${{ secrets.GENERATE_IMAGES || 'true' }}
+        GENERATE_IMAGES: ${{ secrets.GENERATE_IMAGES || '1.0' }}
         MINIMUM_POST_DATE: ${{ secrets.MINIMUM_POST_DATE || '2025-09-24' }}
         MAX_SCHEDULE_DAYS_AHEAD: ${{ secrets.MAX_SCHEDULE_DAYS_AHEAD || '7' }}
         DATABASE_PATH: ./data/posts.db
