@@ -68,6 +68,37 @@ jobs:
           echo "Posted Messages:"
           sqlite3 ./data/posts.db "SELECT id, blog_post_id, message_index, posted_to_linkedin, posted_to_x, posted_at FROM posted_messages ORDER BY id DESC LIMIT 10;" || echo "No posted messages found"
           echo ""
+          
+          # Show unpublished messages with details
+          echo "📝 UNPUBLISHED MESSAGES (Not Posted Yet):"
+          echo "=========================================="
+          sqlite3 ./data/posts.db "
+            SELECT 
+              pm.id as msg_id,
+              bp.title as blog_title,
+              pm.message_index + 1 as msg_num,
+              datetime(pm.scheduled_for) as scheduled,
+              CASE 
+                WHEN pm.posted_to_linkedin = 1 AND pm.posted_to_x = 1 THEN '✅ Both'
+                WHEN pm.posted_to_linkedin = 1 THEN '🔗 LinkedIn Only'
+                WHEN pm.posted_to_x = 1 THEN '𝕏 X Only'
+                ELSE '⏳ Pending'
+              END as status,
+              substr(pm.message_text, 1, 60) || '...' as preview
+            FROM posted_messages pm
+            JOIN blog_posts bp ON pm.blog_post_id = bp.id
+            WHERE pm.posted_at IS NULL OR (pm.posted_to_linkedin = 0 OR pm.posted_to_x = 0)
+            ORDER BY pm.scheduled_for ASC
+          " -header -column || echo "No unpublished messages found"
+          echo ""
+          echo "Total unpublished messages:"
+          sqlite3 ./data/posts.db "
+            SELECT COUNT(*) 
+            FROM posted_messages 
+            WHERE posted_at IS NULL OR (posted_to_linkedin = 0 OR posted_to_x = 0)
+          " || echo "0"
+          echo ""
+          
           echo "Database Schema:"
           sqlite3 ./data/posts.db ".schema"
         else
