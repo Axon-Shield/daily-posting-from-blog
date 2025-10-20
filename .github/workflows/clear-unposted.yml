@@ -48,14 +48,29 @@ jobs:
     - name: Create data directory
       run: mkdir -p data
     
-    - name: Download database from artifacts (if exists)
-      uses: dawidd6/action-download-artifact@v3
+    - name: Get latest successful run id (fetch-posts)
+      id: get_run_fetch
+      uses: actions/github-script@v7
       with:
-        name: posts-database
-        path: data/
-        workflow: fetch-posts.yml
-        workflow_conclusion: success
-        if_no_artifact_found: ignore
+        script: |
+          const runs = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'fetch-posts.yml',
+            branch: 'main',
+            per_page: 20,
+            status: 'success'
+          });
+          const run = runs.data.workflow_runs && runs.data.workflow_runs[0];
+          core.setOutput('run_id', run ? String(run.id) : '');
+
+    - name: Download database from fetch-posts using GitHub CLI
+      if: steps.get_run_fetch.outputs.run_id != ''
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        echo "Downloading database from run ${{ steps.get_run_fetch.outputs.run_id }}"
+        gh run download ${{ steps.get_run_fetch.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
       continue-on-error: true
     
     - name: Show database status before clearing
@@ -95,17 +110,10 @@ jobs:
         echo "=== Database Status AFTER Clearing ==="
         python main.py --status
     
-    - name: Upload updated database as artifact (canonical)
+    - name: Upload updated database as artifact
       uses: actions/upload-artifact@v4
       with:
         name: posts-database
-        path: data/posts.db
-        retention-days: 90
-    
-    - name: Upload updated database as artifact (latest alias)
-      uses: actions/upload-artifact@v4
-      with:
-        name: posts-database-latest
         path: data/posts.db
         retention-days: 90
     
