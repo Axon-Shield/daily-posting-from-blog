@@ -17,7 +17,7 @@ class Database:
         """Initialize database connection."""
         self.db_path = db_path or Config.DATABASE_PATH
         self.scheduler = PostScheduler()
-        self.image_generator = ImageGenerator() if Config.GENERATE_IMAGES else None
+        self.image_generator = ImageGenerator() if Config.GENERATE_IMAGES > 0 else None
         self.init_database()
     
     def init_database(self):

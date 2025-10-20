@@ -48,7 +48,7 @@ def test_x_post_real():
     db = Database()
     rss_parser = RSSParser()
     content_extractor = ContentExtractor()
-    image_generator = ImageGenerator() if Config.XAI_API_KEY and Config.GENERATE_IMAGES else None
+    image_generator = ImageGenerator() if Config.XAI_API_KEY and Config.GENERATE_IMAGES > 0 else None
     x_poster = XPoster()
     
     test_post_id = None

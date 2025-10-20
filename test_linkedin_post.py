@@ -33,7 +33,7 @@ def test_linkedin_post():
     
     # Initialize components
     content_extractor = ContentExtractor()
-    image_generator = ImageGenerator() if Config.XAI_API_KEY and Config.GENERATE_IMAGES else None
+    image_generator = ImageGenerator() if Config.XAI_API_KEY and Config.GENERATE_IMAGES > 0 else None
     linkedin_poster = LinkedInPoster()
     
     # Test blog post data
