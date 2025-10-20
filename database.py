@@ -78,10 +78,11 @@ class Database:
             # Get existing scheduled times to avoid conflicts
             existing_schedules = self.get_all_scheduled_times()
             
-            # Check if we can schedule within the max days limit
+            # Check if we can schedule the FIRST message within the max days limit
+            # (Subsequent messages can extend beyond the limit)
             max_days = Config.MAX_SCHEDULE_DAYS_AHEAD
             can_schedule = self.scheduler.can_schedule_within_days(
-                num_messages=len(messages),
+                num_messages=1,  # Only check if first message fits
                 existing_schedules=existing_schedules,
                 max_days=max_days
             )
@@ -107,11 +108,12 @@ class Database:
             
             post_id = cursor.lastrowid
             
-            # Schedule the messages intelligently (we know it fits now)
+            # Schedule the messages intelligently
+            # First message is within max_days, subsequent messages can extend beyond
             scheduled_times = self.scheduler.schedule_messages(
                 num_messages=len(messages),
-                existing_schedules=existing_schedules,
-                max_days=max_days
+                existing_schedules=existing_schedules
+                # No max_days constraint - allow messages to extend beyond if needed
             )
             
             # Insert messages with scheduled times and generate images

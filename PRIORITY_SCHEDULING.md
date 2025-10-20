@@ -40,20 +40,22 @@ Post 3: "Old Article" (Oct 6, 2025) ← Processed third
 
 Before saving each post, the system checks:
 
-**Question:** *Can all 5 messages from this post fit within the next 7 days?*
+**Question:** *Can the FIRST message from this post start within the next 7 days?*
 
 ```python
 # In database.py
 can_schedule = self.scheduler.can_schedule_within_days(
-    num_messages=5,
+    num_messages=1,  # Only check if first message fits
     existing_schedules=existing_schedules,
     max_days=7  # Default: 7 days
 )
 ```
 
-**If YES:** Process the post, extract messages, schedule them ✅
+**If YES:** Process the post, extract messages, schedule them (subsequent messages can extend beyond 7 days) ✅
 
 **If NO:** Skip the post, stop processing, try again tomorrow ⏸️
+
+**Key Insight:** Only the **first message** needs to start within 7 days. The remaining 4 messages (scheduled 1 per day) can extend to days 8-11 if needed.
 
 ---
 
@@ -62,25 +64,34 @@ can_schedule = self.scheduler.can_schedule_within_days(
 ### Scenario: You have 10 blog posts in your feed
 
 **Current Schedule Status:**
-- Next 7 days have 15 available slots (Mon-Fri × 3 days × 4 slots = 12, rounded)
-- Already scheduled: 10 messages
+- Next 7 days are completely full (all 4 slots × 5 days = 20 messages scheduled)
 
-**Available capacity:** 5 slots in next 7 days
+**Available capacity:** 0 slots in next 7 days, but day 8 has slots available
 
 **What Happens:**
 
 ```
 Post 1 (Latest): 5 messages needed
-✅ Check: Can fit 5 messages in 7 days? YES (5 slots available)
-✅ Action: Extract messages, schedule them
-✅ Result: Processed. 0 slots remaining.
-
-Post 2 (Second newest): 5 messages needed
-❌ Check: Can fit 5 messages in 7 days? NO (0 slots available)
-⏸️  Action: SKIP this post
+✅ Check: Can first message start within 7 days? NO - Day 8 is earliest
+❌ Action: SKIP this post (even though we could schedule starting day 8)
 ⏸️  Result: Not processed. Will retry tomorrow.
 
-Posts 3-10: Not reached (stopped after Post 2)
+Post 2 (Second newest): Not reached (stopped after Post 1)
+Posts 3-10: Not reached
+```
+
+**Alternative Scenario (1 slot available on day 7):**
+
+```
+Post 1 (Latest): 5 messages needed
+✅ Check: Can first message start within 7 days? YES (Day 7 has a slot)
+✅ Action: Extract messages, schedule them
+✅ Result: Message 1 on Day 7, Messages 2-5 on Days 8-11 (beyond 7 days - OK!)
+
+Post 2 (Second newest): 5 messages needed
+❌ Check: Can first message start within 7 days? NO (Day 8 is earliest)
+⏸️  Action: SKIP this post
+⏸️  Result: Not processed. Will retry tomorrow.
 ```
 
 **Next Day:**
@@ -102,7 +113,7 @@ Posts 3-10: Not reached (stopped after Post 2)
 
 **Default:** `7` days
 
-**Purpose:** Limits how far ahead the system will schedule posts.
+**Purpose:** Ensures the **first message** of each post starts within 7 days. Subsequent messages can extend beyond this limit.
 
 **Configuration:**
 
@@ -144,18 +155,21 @@ vs. Old System:
 ---
 
 ### 2. **Prevents Schedule Bloat**
-Schedule never extends beyond 7 days (or your configured limit).
+**First messages** always start within 7 days (or your configured limit).
 
 **Old System:**
 ```
 Today: Oct 20
-Furthest scheduled: Feb 15, 2026 (4 months out) ❌
+Next available slot: Feb 15, 2026 (4 months out) ❌
+New post won't start until February
 ```
 
 **New System:**
 ```
 Today: Oct 20
-Furthest scheduled: Oct 27 (7 days out) ✅
+Next available slot: Oct 27 (within 7 days) ✅
+New post starts within the week
+(Subsequent messages can extend to Oct 31 - fine!)
 ```
 
 ---
