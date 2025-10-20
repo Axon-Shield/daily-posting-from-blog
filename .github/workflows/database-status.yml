@@ -31,10 +31,13 @@ jobs:
       run: mkdir -p data
     
     - name: Download database from artifacts (if exists)
-      uses: actions/download-artifact@v4
+      uses: dawidd6/action-download-artifact@v3
       with:
         name: posts-database
         path: data/
+        workflow: fetch-posts.yml
+        workflow_conclusion: success
+        if_no_artifact_found: ignore
       continue-on-error: true
     
     - name: Show database status
