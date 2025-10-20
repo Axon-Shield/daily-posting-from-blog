@@ -37,6 +37,9 @@ jobs:
     
     - name: Create data directory
       run: mkdir -p data
+
+    - name: Reset DB (optional)
+      run: rm -f data/posts.db
     
     - name: Download database from artifacts (if exists)
       uses: dawidd6/action-download-artifact@v3
