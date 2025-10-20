@@ -369,6 +369,7 @@ Output shows:
 ### System Details
 - **[HOW_POSTING_WORKS.md](HOW_POSTING_WORKS.md)** - System architecture
 - **[SCHEDULING.md](SCHEDULING.md)** - Intelligent scheduling system
+- **[PRIORITY_SCHEDULING.md](PRIORITY_SCHEDULING.md)** - ⭐ Latest posts first (NEW!)
 - **[SCHEDULING_LIMITS.md](SCHEDULING_LIMITS.md)** - What happens with many blog posts
 - **[DATE_FILTERING.md](DATE_FILTERING.md)** - Blog post cutoff date configuration
 - **[IMAGE_GENERATION.md](IMAGE_GENERATION.md)** - AI image generation with Grok

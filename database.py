@@ -58,8 +58,13 @@ class Database:
             conn.commit()
     
     def save_blog_post(self, url: str, title: str, content: str, 
-                      published_date: str, messages: List[str]) -> int:
-        """Save a blog post and its extracted messages with intelligent scheduling."""
+                      published_date: str, messages: List[str]) -> Optional[int]:
+        """
+        Save a blog post and its extracted messages with intelligent scheduling.
+        
+        Returns:
+            Post ID if saved successfully, None if scheduling not possible
+        """
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
@@ -69,6 +74,22 @@ class Database:
             
             if existing:
                 return existing[0]
+            
+            # Get existing scheduled times to avoid conflicts
+            existing_schedules = self.get_all_scheduled_times()
+            
+            # Check if we can schedule within the max days limit
+            max_days = Config.MAX_SCHEDULE_DAYS_AHEAD
+            can_schedule = self.scheduler.can_schedule_within_days(
+                num_messages=len(messages),
+                existing_schedules=existing_schedules,
+                max_days=max_days
+            )
+            
+            if not can_schedule:
+                print(f"⏸️  SKIPPING: Cannot schedule '{title}' within {max_days} days")
+                print(f"   Schedule is full. This post will be retried on next fetch.")
+                return None
             
             # Insert new post
             cursor.execute("""
@@ -86,13 +107,11 @@ class Database:
             
             post_id = cursor.lastrowid
             
-            # Get existing scheduled times to avoid conflicts
-            existing_schedules = self.get_all_scheduled_times()
-            
-            # Schedule the messages intelligently
+            # Schedule the messages intelligently (we know it fits now)
             scheduled_times = self.scheduler.schedule_messages(
                 num_messages=len(messages),
-                existing_schedules=existing_schedules
+                existing_schedules=existing_schedules,
+                max_days=max_days
             )
             
             # Insert messages with scheduled times and generate images

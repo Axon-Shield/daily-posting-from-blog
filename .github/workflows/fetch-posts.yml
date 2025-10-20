@@ -49,6 +49,7 @@ jobs:
         XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
         GENERATE_IMAGES: ${{ secrets.GENERATE_IMAGES || 'true' }}
         MINIMUM_POST_DATE: ${{ secrets.MINIMUM_POST_DATE || '2025-10-15' }}
+        MAX_SCHEDULE_DAYS_AHEAD: ${{ secrets.MAX_SCHEDULE_DAYS_AHEAD || '7' }}
         DATABASE_PATH: ./data/posts.db
         POSTS_PER_BLOG: 5
       run: |

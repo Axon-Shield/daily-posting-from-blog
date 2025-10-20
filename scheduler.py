@@ -121,11 +121,74 @@ class PostScheduler:
         # Day is full
         return None
     
+    def can_schedule_within_days(
+        self,
+        num_messages: int,
+        existing_schedules: List[datetime],
+        max_days: int,
+        start_date: Optional[datetime] = None
+    ) -> bool:
+        """
+        Check if all messages can be scheduled within max_days from now.
+        
+        Args:
+            num_messages: Number of messages to schedule
+            existing_schedules: List of already scheduled post times
+            max_days: Maximum days ahead to schedule
+            start_date: Starting date (defaults to tomorrow)
+            
+        Returns:
+            True if all messages can fit within max_days, False otherwise
+        """
+        if start_date is None:
+            start_date = datetime.now(self.eastern) + timedelta(days=1)
+        
+        # Ensure start date is timezone-aware
+        if start_date.tzinfo is None:
+            start_date = self.eastern.localize(start_date)
+        
+        # Calculate cutoff date
+        cutoff_date = start_date + timedelta(days=max_days)
+        
+        # Normalize to start of day
+        current_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        current_date = self.get_next_business_day(current_date)
+        
+        scheduled_count = 0
+        temp_schedules = []
+        
+        # Try to schedule all messages
+        for _ in range(num_messages):
+            # Check if we've exceeded the time limit
+            if current_date >= cutoff_date:
+                return False  # Can't fit all messages within max_days
+            
+            # Find available slot on current date
+            slot_index = self.get_available_slot(current_date, existing_schedules + temp_schedules)
+            
+            if slot_index is not None:
+                # Slot available on current date
+                scheduled_time = self.create_scheduled_time(current_date, slot_index)
+                temp_schedules.append(scheduled_time)
+                scheduled_count += 1
+            else:
+                # Day is full, move to next business day
+                current_date += timedelta(days=1)
+                current_date = self.get_next_business_day(current_date)
+                continue  # Try again on the new day
+            
+            # Move to next day for next message from this blog post
+            current_date += timedelta(days=1)
+            current_date = self.get_next_business_day(current_date)
+        
+        return scheduled_count == num_messages
+    
     def schedule_messages(
         self,
         num_messages: int,
         existing_schedules: List[datetime],
-        start_date: Optional[datetime] = None
+        start_date: Optional[datetime] = None,
+        max_days: Optional[int] = None
     ) -> List[datetime]:
         """
         Schedule multiple messages intelligently.
@@ -137,9 +200,13 @@ class PostScheduler:
             num_messages: Number of messages to schedule
             existing_schedules: List of already scheduled post times
             start_date: Starting date (defaults to tomorrow)
+            max_days: Maximum days ahead to schedule (optional check)
             
         Returns:
             List of scheduled datetimes
+            
+        Raises:
+            ValueError: If unable to schedule within max_days (if specified)
         """
         if start_date is None:
             start_date = datetime.now(self.eastern) + timedelta(days=1)
@@ -147,6 +214,15 @@ class PostScheduler:
         # Ensure start date is timezone-aware
         if start_date.tzinfo is None:
             start_date = self.eastern.localize(start_date)
+        
+        # Check if scheduling is possible within max_days
+        if max_days is not None:
+            if not self.can_schedule_within_days(num_messages, existing_schedules, max_days, start_date):
+                cutoff = start_date + timedelta(days=max_days)
+                raise ValueError(
+                    f"Cannot schedule {num_messages} messages within {max_days} days "
+                    f"(by {cutoff.strftime('%Y-%m-%d')}). Schedule is full."
+                )
         
         # Normalize to start of day
         current_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)

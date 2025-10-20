@@ -41,8 +41,12 @@ class BlogPostAutomation:
         
         print(f"Found {len(posts)} posts in feed.")
         
+        processed_count = 0
+        skipped_count = 0
+        
         for post in posts:
             print(f"\nProcessing: {post['title']}")
+            print(f"Published: {post['published_date']}")
             
             # Check if we already have this post
             try:
@@ -56,7 +60,7 @@ class BlogPostAutomation:
                 
                 print(f"Extracted {len(messages)} messages")
                 
-                # Save to database
+                # Try to save to database (may be skipped if schedule is full)
                 post_id = self.db.save_blog_post(
                     url=post['url'],
                     title=post['title'],
@@ -65,11 +69,27 @@ class BlogPostAutomation:
                     messages=messages
                 )
                 
-                print(f"Saved to database with ID: {post_id}")
+                if post_id:
+                    print(f"✅ Saved to database with ID: {post_id}")
+                    processed_count += 1
+                else:
+                    print(f"⏸️  Skipped (schedule full)")
+                    skipped_count += 1
+                    # Stop processing older posts if schedule is full
+                    print(f"\n⚠️  Schedule is full. Stopping fetch.")
+                    print(f"   Older posts will be retried when schedule clears.")
+                    break
                 
             except Exception as e:
-                print(f"Error processing post: {e}")
+                print(f"❌ Error processing post: {e}")
                 continue
+        
+        print(f"\n{'='*60}")
+        print(f"FETCH SUMMARY")
+        print(f"{'='*60}")
+        print(f"Posts processed: {processed_count}")
+        print(f"Posts skipped: {skipped_count}")
+        print(f"{'='*60}")
     
     def post_daily_message(self):
         """Post the next message to social media platforms."""
