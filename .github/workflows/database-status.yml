@@ -94,6 +94,23 @@ jobs:
           const run = runs.data.workflow_runs && runs.data.workflow_runs[0];
           core.setOutput('run_id', run ? String(run.id) : '');
 
+    - name: Get latest successful run id (clear-unposted)
+      id: get_run_clear
+      if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id == ''
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const runs = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'clear-unposted.yml',
+            branch: 'main',
+            per_page: 20,
+            status: 'success'
+          });
+          const run = runs.data.workflow_runs && runs.data.workflow_runs[0];
+          core.setOutput('run_id', run ? String(run.id) : '');
+
     - name: List artifacts for daily-post run
       if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id != ''
       uses: actions/github-script@v7
@@ -115,6 +132,29 @@ jobs:
       run: |
         echo "Downloading artifacts from daily-post run ${{ steps.get_run_daily.outputs.run_id }}"
         gh run download ${{ steps.get_run_daily.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
+      continue-on-error: true
+
+    - name: List artifacts for clear-unposted run
+      if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id == '' && steps.get_run_clear.outputs.run_id != ''
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const run_id = parseInt('${{ steps.get_run_clear.outputs.run_id }}');
+          const arts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: run_id,
+            per_page: 50
+          });
+          console.log('Artifacts in clear-unposted run:', arts.data.artifacts.map(a => `${a.name} (${a.size_in_bytes} bytes)`));
+
+    - name: Download DB artifacts from clear-unposted using GitHub CLI (fallback)
+      if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id == '' && steps.get_run_clear.outputs.run_id != ''
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        echo "Downloading artifacts from clear-unposted run ${{ steps.get_run_clear.outputs.run_id }}"
+        gh run download ${{ steps.get_run_clear.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
       continue-on-error: true
 
     - name: Show database status
