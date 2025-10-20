@@ -11,6 +11,9 @@ on:
 jobs:
   database-status:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     
     steps:
     - name: Checkout repository
@@ -50,11 +53,34 @@ jobs:
           const run = runs.data.workflow_runs && runs.data.workflow_runs[0];
           core.setOutput('run_id', run ? String(run.id) : '');
 
+    - name: List artifacts for fetch-posts run
+      if: steps.get_run_fetch.outputs.run_id != ''
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const run_id = Number('${{ steps.get_run_fetch.outputs.run_id }}');
+          const arts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id,
+            per_page: 50
+          });
+          console.log('Artifacts in fetch-posts run:', arts.data.artifacts.map(a => `${a.name} (${a.size_in_bytes} bytes)`));
+
     - name: Download database artifact from fetch-posts
       if: steps.get_run_fetch.outputs.run_id != ''
       uses: actions/download-artifact@v4
       with:
         name: posts-database
+        path: data/
+        run-id: ${{ steps.get_run_fetch.outputs.run_id }}
+      continue-on-error: true
+
+    - name: Fallback download by pattern from fetch-posts
+      if: steps.get_run_fetch.outputs.run_id != '' && !exists('data/posts.db')
+      uses: actions/download-artifact@v4
+      with:
+        pattern: posts-*
         path: data/
         run-id: ${{ steps.get_run_fetch.outputs.run_id }}
       continue-on-error: true
@@ -76,6 +102,20 @@ jobs:
           const run = runs.data.workflow_runs && runs.data.workflow_runs[0];
           core.setOutput('run_id', run ? String(run.id) : '');
 
+    - name: List artifacts for daily-post run
+      if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id != ''
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const run_id = Number('${{ steps.get_run_daily.outputs.run_id }}');
+          const arts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id,
+            per_page: 50
+          });
+          console.log('Artifacts in daily-post run:', arts.data.artifacts.map(a => `${a.name} (${a.size_in_bytes} bytes)`));
+
     - name: Download database artifact from daily-post (fallback)
       if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id != ''
       uses: actions/download-artifact@v4
@@ -84,6 +124,20 @@ jobs:
         path: data/
         run-id: ${{ steps.get_run_daily.outputs.run_id }}
       continue-on-error: true
+
+    - name: Fallback download by pattern from daily-post
+      if: steps.get_run_fetch.outputs.run_id == '' && steps.get_run_daily.outputs.run_id != '' && !exists('data/posts.db')
+      uses: actions/download-artifact@v4
+      with:
+        pattern: posts-*
+        path: data/
+        run-id: ${{ steps.get_run_daily.outputs.run_id }}
+      continue-on-error: true
+
+    - name: List downloaded files
+      run: |
+        echo "Workspace:" && pwd
+        echo "Files in data/:" && ls -lah data || true
 
     - name: Show database status
       env:
@@ -145,7 +199,7 @@ jobs:
               substr(pm.message_text, 1, 60) || '...' as preview
             FROM posted_messages pm
             JOIN blog_posts bp ON pm.blog_post_id = bp.id
-            WHERE pm.posted_at IS NULL OR (pm.posted_to_linkedin = 0 OR pm.posted_to_x == 0)
+            WHERE pm.posted_at IS NULL OR (pm.posted_to_linkedin = 0 OR pm.posted_to_x = 0)
             ORDER BY pm.scheduled_for ASC
           " -header -column || echo "No unpublished messages found"
           echo ""
@@ -173,7 +227,7 @@ jobs:
         echo "============================================================"
     
     - name: Upload database status as artifact
-      if: always()
+      if: always() && hashFiles('data/posts.db') != ''
       uses: actions/upload-artifact@v4
       with:
         name: database-status-report
