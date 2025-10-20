@@ -48,8 +48,10 @@ class XPoster:
             missing.append("X_ACCESS_TOKEN_SECRET")
         
         if missing:
-            print(f"Warning: X (Twitter) credentials not fully configured")
-            print(f"Missing or empty: {', '.join(missing)}")
+            # Only show warning, not error (this is expected in fetch-only workflows)
+            print(f"ℹ️  X (Twitter) credentials not configured (posting disabled)")
+            print(f"   Missing: {', '.join(missing)}")
+            print(f"   This is normal for fetch-only workflows.")
             return
         
         try:
