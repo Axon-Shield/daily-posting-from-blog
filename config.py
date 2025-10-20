@@ -20,6 +20,8 @@ class Config:
     # xAI Grok API Configuration (for image generation)
     XAI_API_KEY = os.getenv('XAI_API_KEY')
     GENERATE_IMAGES = os.getenv('GENERATE_IMAGES', 'true').lower() == 'true'
+    # Where to write generated images during CI runs; used for artifact upload
+    IMAGE_OUTPUT_DIR = os.getenv('IMAGE_OUTPUT_DIR', './artifacts/images')
     
     # LinkedIn Configuration
     LINKEDIN_ACCESS_TOKEN = os.getenv('LINKEDIN_ACCESS_TOKEN')
@@ -66,6 +68,8 @@ class Config:
         
         # Create data directory if it doesn't exist
         Path(cls.DATABASE_PATH).parent.mkdir(parents=True, exist_ok=True)
+        # Create image output directory as needed
+        Path(cls.IMAGE_OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
         
         return True
 

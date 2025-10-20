@@ -5,6 +5,7 @@ import requests
 import os
 import base64
 import tempfile
+import hashlib
 from typing import Optional, Dict
 from config import Config
 from anthropic import Anthropic
@@ -114,13 +115,12 @@ Return ONLY the image prompt, nothing else."""
                 # Decode base64 to bytes
                 image_bytes = base64.b64decode(b64_data)
                 
-                # Save to temporary file and get a URL-like identifier
-                # For social media posting, we need to save the image temporarily
-                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-                temp_file.write(image_bytes)
-                temp_file.close()
-                
-                image_path = temp_file.name
+                # Save to configured output directory with deterministic filename
+                os.makedirs(Config.IMAGE_OUTPUT_DIR, exist_ok=True)
+                prompt_hash = hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:16]
+                image_path = os.path.join(Config.IMAGE_OUTPUT_DIR, f"img_{prompt_hash}.jpg")
+                with open(image_path, 'wb') as f:
+                    f.write(image_bytes)
                 print(f"✓ Generated image saved to: {image_path}")
                 return image_path
             else:
@@ -192,17 +192,6 @@ Return ONLY the image prompt, nothing else."""
         if not image_path:
             return None
         
-        # Image is already saved to temporary file
-        # Optionally backup to permanent location
-        if message_id is not None:
-            permanent_path = f"./data/images/message_{message_id}.jpg"
-            try:
-                os.makedirs(os.path.dirname(permanent_path), exist_ok=True)
-                import shutil
-                shutil.copy2(image_path, permanent_path)
-                print(f"✓ Backed up image to: {permanent_path}")
-            except Exception as e:
-                print(f"Warning: Could not backup image: {e}")
-        
+        # Image is already saved to the output directory; return path
         return image_path
 

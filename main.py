@@ -13,6 +13,7 @@ from rss_parser import RSSParser
 from content_extractor import ContentExtractor
 from linkedin_poster import LinkedInPoster
 from x_poster import XPoster
+import os
 
 
 class BlogPostAutomation:
@@ -191,6 +192,22 @@ class BlogPostAutomation:
             else:
                 print("⊘ X (Twitter) not configured (skipping)")
         
+        # If both platforms are now posted, clean up image file and clear path
+        try:
+            status = self.db.get_message_status(message_data['id'])
+            if status and status['posted_to_linkedin'] and status['posted_to_x'] and status.get('image_url'):
+                image_path = status['image_url']
+                if os.path.isfile(image_path):
+                    try:
+                        os.remove(image_path)
+                        print(f"🧹 Removed image file: {image_path}")
+                    except Exception as e:
+                        print(f"Warning: Failed to remove image file: {e}")
+                # Clear stored image path regardless
+                self.db.clear_image_for_message(message_data['id'])
+        except Exception as e:
+            print(f"Warning: Cleanup check failed: {e}")
+
         print("\n" + "="*60)
         print(f"Daily posting completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("="*60 + "\n")

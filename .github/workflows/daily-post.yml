@@ -1,3 +1,62 @@
+name: Daily Social Media Post
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 9:00 AM UTC (adjust as needed)
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download latest images artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: images
+          path: artifacts/images
+        continue-on-error: true
+
+      - name: Post next scheduled message
+        env:
+          BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+          LINKEDIN_ORG_ID: ${{ secrets.LINKEDIN_ORG_ID }}
+          LINKEDIN_POST_AS_ORG: ${{ secrets.LINKEDIN_POST_AS_ORG }}
+          LINKEDIN_ENABLED: ${{ secrets.LINKEDIN_ENABLED || 'false' }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          DATABASE_PATH: ./data/posts.db
+          POSTS_PER_BLOG: ${{ secrets.POSTS_PER_BLOG || 5 }}
+          IMAGE_OUTPUT_DIR: ./artifacts/images
+          GENERATE_IMAGES: ${{ secrets.GENERATE_IMAGES || 'true' }}
+        run: |
+          python main.py --post-daily
+
+      - name: Cleanup artifacts folder (post-run)
+        if: always()
+        run: |
+          rm -rf artifacts/images || true
+
 name: Social Media Posting (Scheduled)
 
 on:

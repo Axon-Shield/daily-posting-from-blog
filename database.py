@@ -283,6 +283,41 @@ class Database:
             
             return results
     
+    def get_message_status(self, message_id: int) -> Optional[Dict]:
+        """Get posted flags and image path for a specific message id."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT posted_to_linkedin, posted_to_x, image_url
+                FROM posted_messages
+                WHERE id = ?
+                """,
+                (message_id,)
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return {
+                'posted_to_linkedin': bool(row[0]),
+                'posted_to_x': bool(row[1]),
+                'image_url': row[2],
+            }
+    
+    def clear_image_for_message(self, message_id: int):
+        """Clear image path for a message after successful posting and cleanup."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE posted_messages
+                SET image_url = NULL
+                WHERE id = ?
+                """,
+                (message_id,)
+            )
+            conn.commit()
+    
     def delete_blog_post(self, post_id: int):
         """
         Delete a blog post and all its associated messages.
