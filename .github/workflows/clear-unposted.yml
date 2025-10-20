@@ -48,29 +48,58 @@ jobs:
     - name: Create data directory
       run: mkdir -p data
     
-    - name: Get latest successful run id (fetch-posts)
-      id: get_run_fetch
+    - name: Find latest database from any workflow
+      id: get_latest_db
       uses: actions/github-script@v7
       with:
         script: |
-          const runs = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'fetch-posts.yml',
-            branch: 'main',
-            per_page: 20,
-            status: 'success'
-          });
-          const run = runs.data.workflow_runs && runs.data.workflow_runs[0];
-          core.setOutput('run_id', run ? String(run.id) : '');
+          // Get runs from all three workflows
+          const workflows = ['fetch-posts.yml', 'daily-post.yml', 'clear-unposted.yml'];
+          const allRuns = [];
+          
+          for (const workflow of workflows) {
+            try {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflow,
+                branch: 'main',
+                per_page: 10,
+                status: 'success'
+              });
+              if (runs.data.workflow_runs) {
+                allRuns.push(...runs.data.workflow_runs.map(run => ({
+                  ...run,
+                  workflow_name: workflow
+                })));
+              }
+            } catch (error) {
+              console.log(`Error fetching runs for ${workflow}:`, error.message);
+            }
+          }
+          
+          // Sort by creation time (newest first)
+          allRuns.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          
+          const latestRun = allRuns[0];
+          if (latestRun) {
+            console.log(`Latest database source: ${latestRun.workflow_name} (run ${latestRun.id})`);
+            core.setOutput('run_id', String(latestRun.id));
+            core.setOutput('workflow_name', latestRun.workflow_name);
+            core.setOutput('created_at', latestRun.created_at);
+          } else {
+            console.log('No successful workflow runs found');
+            core.setOutput('run_id', '');
+          }
 
-    - name: Download database from fetch-posts using GitHub CLI
-      if: steps.get_run_fetch.outputs.run_id != ''
+    - name: Download latest database
+      if: steps.get_latest_db.outputs.run_id != ''
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        echo "Downloading database from run ${{ steps.get_run_fetch.outputs.run_id }}"
-        gh run download ${{ steps.get_run_fetch.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
+        echo "Downloading latest database from ${{ steps.get_latest_db.outputs.workflow_name }} run ${{ steps.get_latest_db.outputs.run_id }}"
+        echo "Created at: ${{ steps.get_latest_db.outputs.created_at }}"
+        gh run download ${{ steps.get_latest_db.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
       continue-on-error: true
     
     - name: Show database status before clearing
