@@ -1,3 +1,4 @@
+# yamllint disable-line rule:truthy
 name: Database Status Check
 
 on:
