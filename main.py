@@ -50,6 +50,7 @@ class BlogPostAutomation:
         print(f"Cutoff Date: {Config.MINIMUM_POST_DATE}", flush=True)
         
         # Determine limit for blog posts per run
+        print(f"DEBUG: MAX_BLOG_POSTS_PER_RUN = {Config.MAX_BLOG_POSTS_PER_RUN} (type: {type(Config.MAX_BLOG_POSTS_PER_RUN)})", flush=True)
         limit = Config.MAX_BLOG_POSTS_PER_RUN if Config.MAX_BLOG_POSTS_PER_RUN > 0 else 5
         if Config.MAX_BLOG_POSTS_PER_RUN > 0:
             print(f"Blog Post Limit: {limit} posts per run", flush=True)
