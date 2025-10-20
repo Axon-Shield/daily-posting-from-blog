@@ -163,7 +163,7 @@ class BlogPostAutomation:
                 print("⊘ LinkedIn not configured (skipping)")
         
         # Post to X (Twitter)
-        if not message_data['posted_to_x'] and Config.X_API_KEY:
+        if not message_data['posted_to_x'] and Config.X_API_KEY and not os.getenv('TEST_MODE', '').lower() == 'true':
             print("\n--- Posting to X (Twitter) ---")
             try:
                 # Enhance message for X
@@ -186,6 +186,8 @@ class BlogPostAutomation:
             
             except Exception as e:
                 print(f"✗ Error posting to X: {e}")
+        elif os.getenv('TEST_MODE', '').lower() == 'true':
+            print("⊘ X (Twitter) posting disabled in TEST_MODE")
         else:
             if message_data['posted_to_x']:
                 print("✓ Already posted to X")

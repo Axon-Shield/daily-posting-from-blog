@@ -74,6 +74,7 @@ jobs:
         DATABASE_PATH: ./data/posts.db
         POSTS_PER_BLOG: 5
         IMAGE_OUTPUT_DIR: ./artifacts/images
+        TEST_MODE: ${{ secrets.TEST_MODE || 'false' }}
       run: |
         python main.py --post-daily
     
