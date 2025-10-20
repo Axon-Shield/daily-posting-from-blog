@@ -30,25 +30,17 @@ jobs:
     - name: Create data directory
       run: mkdir -p data
     
-    - name: Download database from artifacts (fetch-posts)
-      uses: dawidd6/action-download-artifact@v3
-      with:
-        name: posts-database
-        path: data/
-        workflow: fetch-posts.yml
-        workflow_conclusion: success
-        if_no_artifact_found: warn
-      continue-on-error: true
+    - name: Remove any stale local database
+      run: |
+        rm -f data/posts.db || true
     
-    - name: Download database from artifacts (daily-post) - fallback
-      if: always()
+    - name: Download latest posts-database artifact (global search)
       uses: dawidd6/action-download-artifact@v3
       with:
         name: posts-database
         path: data/
-        workflow: daily-post.yml
-        workflow_conclusion: success
-        if_no_artifact_found: ignore
+        search_artifacts: true
+        if_no_artifact_found: warn
       continue-on-error: true
     
     - name: Show database status
