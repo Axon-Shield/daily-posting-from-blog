@@ -361,14 +361,21 @@ Output shows:
 
 ## 📚 Documentation
 
+### Getting Started
 - **[QUICK_START.md](QUICK_START.md)** - 10-minute setup guide
 - **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Detailed API configuration
 - **[GITHUB_SETUP.md](GITHUB_SETUP.md)** - GitHub repository setup
-- **[SCHEDULING.md](SCHEDULING.md)** - Intelligent scheduling system
-- **[IMAGE_GENERATION.md](IMAGE_GENERATION.md)** - AI image generation with Grok
+
+### System Details
 - **[HOW_POSTING_WORKS.md](HOW_POSTING_WORKS.md)** - System architecture
-- **[GITHUB_ACTIONS_LIMITS.md](GITHUB_ACTIONS_LIMITS.md)** - Usage limits & restrictions
+- **[SCHEDULING.md](SCHEDULING.md)** - Intelligent scheduling system
+- **[SCHEDULING_LIMITS.md](SCHEDULING_LIMITS.md)** - What happens with many blog posts
+- **[DATE_FILTERING.md](DATE_FILTERING.md)** - Blog post cutoff date configuration
+- **[IMAGE_GENERATION.md](IMAGE_GENERATION.md)** - AI image generation with Grok
+
+### Operations
 - **[TESTING.md](TESTING.md)** - Testing workflows
+- **[GITHUB_ACTIONS_LIMITS.md](GITHUB_ACTIONS_LIMITS.md)** - Usage limits & restrictions
 
 ## 🔐 Security Notes
 
