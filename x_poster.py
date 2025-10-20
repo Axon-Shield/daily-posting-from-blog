@@ -36,8 +36,20 @@ class XPoster:
     
     def _init_client(self):
         """Initialize Tweepy client and API (v1.1 for media upload)."""
-        if not all([self.api_key, self.api_secret, self.access_token, self.access_token_secret]):
-            print("Warning: X (Twitter) credentials not fully configured")
+        # Check which credentials are missing
+        missing = []
+        if not self.api_key:
+            missing.append("X_API_KEY")
+        if not self.api_secret:
+            missing.append("X_API_SECRET")
+        if not self.access_token:
+            missing.append("X_ACCESS_TOKEN")
+        if not self.access_token_secret:
+            missing.append("X_ACCESS_TOKEN_SECRET")
+        
+        if missing:
+            print(f"Warning: X (Twitter) credentials not fully configured")
+            print(f"Missing or empty: {', '.join(missing)}")
             return
         
         try:
