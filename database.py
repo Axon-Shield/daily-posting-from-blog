@@ -173,7 +173,8 @@ class Database:
             if not row:
                 return None
             
-            scheduled_time = datetime.fromisoformat(row[4])
+            # row[5] is scheduled_for, not row[4]!
+            scheduled_time = datetime.fromisoformat(row[5])
             
             # Check if it's time to post
             if not self.scheduler.is_time_to_post(scheduled_time):
