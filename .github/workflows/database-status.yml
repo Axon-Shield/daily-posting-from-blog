@@ -117,22 +117,6 @@ jobs:
         gh run download ${{ steps.get_run_daily.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
       continue-on-error: true
 
-    - name: Normalize downloaded DB filename
-      run: |
-        echo "Files in data before normalization:" && ls -lah data || true
-        DB_CANDIDATE=$(find data -maxdepth 2 -type f -name "*.db" | head -n1 || true)
-        if [ -n "$DB_CANDIDATE" ]; then
-          echo "Found DB candidate: $DB_CANDIDATE"
-          if [ "$DB_CANDIDATE" != "data/posts.db" ]; then
-            cp "$DB_CANDIDATE" data/posts.db
-          else
-            echo "Database already in correct location: data/posts.db"
-          fi
-        else
-          echo "No .db file found in downloaded artifacts"
-        fi
-        echo "Files in data after normalization:" && ls -lah data || true
-
     - name: Show database status
       env:
         BLOG_RSS_FEED_URL: ${{ secrets.BLOG_RSS_FEED_URL }}
