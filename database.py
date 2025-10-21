@@ -150,7 +150,7 @@ class Database:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
-            # Find next scheduled message that's due and not fully posted
+            # Find next scheduled message that's due and not posted to any platform
             cursor.execute("""
                 SELECT 
                     pm.id,
@@ -165,7 +165,7 @@ class Database:
                     bp.post_url
                 FROM posted_messages pm
                 JOIN blog_posts bp ON pm.blog_post_id = bp.id
-                WHERE (pm.posted_to_linkedin = 0 OR pm.posted_to_x = 0)
+                WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
                   AND pm.scheduled_for IS NOT NULL
                 ORDER BY pm.scheduled_for ASC
                 LIMIT 1

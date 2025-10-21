@@ -205,10 +205,10 @@ class BlogPostAutomation:
             else:
                 print("⊘ X (Twitter) not configured (skipping)")
         
-        # If both platforms are now posted, clean up image file and clear path
+        # Clean up image file after any successful posting
         try:
             status = self.db.get_message_status(message_data['id'])
-            if status and status['posted_to_linkedin'] and status['posted_to_x'] and status.get('image_url'):
+            if status and (status['posted_to_linkedin'] or status['posted_to_x']) and status.get('image_url'):
                 image_path = status['image_url']
                 if os.path.isfile(image_path):
                     try:
