@@ -225,6 +225,76 @@ class BlogPostAutomation:
         print(f"Daily posting completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("="*60 + "\n")
     
+    def regenerate_missing_images(self):
+        """Regenerate images for unposted messages that have invalid image paths."""
+        print("\n" + "="*60")
+        print("REGENERATING MISSING IMAGES FOR UNPOSTED MESSAGES")
+        print("="*60 + "\n")
+        
+        # Get all unposted messages
+        unposted_messages = self.db.get_unposted_messages()
+        
+        if not unposted_messages:
+            print("No unposted messages found.")
+            return
+        
+        print(f"Found {len(unposted_messages)} unposted messages")
+        
+        regenerated_count = 0
+        
+        for message in unposted_messages:
+            message_id = message['id']
+            blog_title = message['blog_title']
+            message_text = message['message_text']
+            current_image_url = message.get('image_url')
+            
+            print(f"\n--- Processing Message {message_id} ---")
+            print(f"Blog: {blog_title}")
+            print(f"Current image: {current_image_url or 'None'}")
+            
+            # Check if image path is invalid (file doesn't exist)
+            needs_regeneration = False
+            if current_image_url:
+                if not os.path.isfile(current_image_url):
+                    print(f"❌ Image file missing: {current_image_url}")
+                    needs_regeneration = True
+                else:
+                    print(f"✅ Image file exists: {current_image_url}")
+            else:
+                print("ℹ️  No image path in database")
+                needs_regeneration = True
+            
+            if needs_regeneration and Config.GENERATE_IMAGES > 0:
+                print("🎨 Generating new image...")
+                try:
+                    # Create image prompt
+                    prompt = self.content_extractor.create_image_prompt(blog_title, message_text)
+                    print(f"Prompt: {prompt[:100]}...")
+                    
+                    # Generate image
+                    image_path = self.db.image_generator.generate_image(prompt)
+                    
+                    if image_path:
+                        print(f"✅ Generated image: {image_path}")
+                        # Update database with new image path
+                        self.db.update_message_image(message_id, image_path)
+                        regenerated_count += 1
+                    else:
+                        print("❌ Failed to generate image")
+                        
+                except Exception as e:
+                    print(f"❌ Error generating image: {e}")
+            elif needs_regeneration and Config.GENERATE_IMAGES == 0:
+                print("⊘ Image generation disabled (GENERATE_IMAGES=0)")
+            else:
+                print("✅ Image is valid, skipping")
+        
+        print(f"\n{'='*60}")
+        print(f"Image regeneration completed!")
+        print(f"Regenerated: {regenerated_count} images")
+        print(f"Total unposted messages: {len(unposted_messages)}")
+        print("="*60 + "\n")
+    
     def show_status(self):
         """Display current status of the automation."""
         print("\n" + "="*60)
@@ -379,10 +449,16 @@ Examples:
         help='Test API connections'
     )
     
+    parser.add_argument(
+        '--regenerate-missing-images',
+        action='store_true',
+        help='Regenerate missing images for unposted messages'
+    )
+    
     args = parser.parse_args()
     
     # If no arguments provided, show help
-    if not any([args.fetch_posts, args.post_daily, args.status, args.test]):
+    if not any([args.fetch_posts, args.post_daily, args.status, args.test, args.regenerate_missing_images]):
         parser.print_help()
         sys.exit(0)
     
@@ -400,6 +476,9 @@ Examples:
         
         if args.test:
             automation.test_apis()
+        
+        if args.regenerate_missing_images:
+            automation.regenerate_missing_images()
     
     except Exception as e:
         print(f"\nError: {e}")

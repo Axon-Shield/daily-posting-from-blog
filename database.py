@@ -338,4 +338,53 @@ class Database:
             
             conn.commit()
             print(f"✓ Deleted blog post {post_id} and all associated messages")
+    
+    def get_unposted_messages(self) -> List[Dict]:
+        """Get all unposted messages (not posted to any platform)."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT 
+                    pm.id,
+                    pm.blog_post_id,
+                    pm.message_index,
+                    pm.message_text,
+                    pm.image_url,
+                    pm.scheduled_for,
+                    pm.posted_to_linkedin,
+                    pm.posted_to_x,
+                    bp.title as blog_title,
+                    bp.post_url as blog_url
+                FROM posted_messages pm
+                JOIN blog_posts bp ON pm.blog_post_id = bp.id
+                WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
+                ORDER BY pm.scheduled_for ASC
+            """)
+            
+            rows = cursor.fetchall()
+            return [
+                {
+                    'id': row[0],
+                    'blog_post_id': row[1],
+                    'message_index': row[2],
+                    'message_text': row[3],
+                    'image_url': row[4],
+                    'scheduled_for': row[5],
+                    'posted_to_linkedin': bool(row[6]),
+                    'posted_to_x': bool(row[7]),
+                    'blog_title': row[8],
+                    'blog_url': row[9]
+                }
+                for row in rows
+            ]
+    
+    def update_message_image(self, message_id: int, image_path: str):
+        """Update the image URL for a specific message."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE posted_messages SET image_url = ? WHERE id = ?",
+                (image_path, message_id)
+            )
+            conn.commit()
 
