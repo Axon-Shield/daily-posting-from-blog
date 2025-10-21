@@ -261,18 +261,23 @@ jobs:
           echo "=========================="
           existing_count=0
           missing_count=0
-          sqlite3 ./data/posts.db "
+          
+          # Get all image paths and check existence
+          while IFS='|' read -r image_url; do
+            if [[ -n "$image_url" && "$image_url" != "image_url" ]]; then
+              if [[ -f "$image_url" ]]; then
+                ((existing_count++))
+              else
+                ((missing_count++))
+              fi
+            fi
+          done < <(sqlite3 ./data/posts.db "
             SELECT pm.image_url
             FROM posted_messages pm
             WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
             AND pm.image_url IS NOT NULL AND pm.image_url != ''
-          " | while read -r image_url; do
-            if [[ -f "$image_url" ]]; then
-              ((existing_count++))
-            else
-              ((missing_count++))
-            fi
-          done
+          ")
+          
           echo "Files that exist: $existing_count"
           echo "Files that are missing: $missing_count"
           echo ""
