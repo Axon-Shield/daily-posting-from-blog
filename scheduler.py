@@ -265,6 +265,9 @@ class PostScheduler:
         """
         Check if it's time to post a scheduled message.
         
+        Uses a time window approach: posts messages scheduled for the current time slot
+        or earlier, allowing for GitHub cron variance.
+        
         Args:
             scheduled_time: When the message is scheduled for
             current_time: Current time (defaults to now)
@@ -286,8 +289,37 @@ class PostScheduler:
         else:
             current_time = current_time.astimezone(self.eastern)
         
-        # Post if current time is past scheduled time
-        return current_time >= scheduled_time
+        # Get the current time slot (9am, 11am, 1pm, 3pm)
+        current_slot = self._get_current_time_slot(current_time)
+        scheduled_slot = self._get_current_time_slot(scheduled_time)
+        
+        # Post if scheduled for current slot or earlier
+        return scheduled_slot <= current_slot
+    
+    def _get_current_time_slot(self, dt: datetime) -> int:
+        """
+        Get the time slot index for a given datetime.
+        
+        Returns:
+            0: 9am slot
+            1: 11am slot  
+            2: 1pm slot
+            3: 3pm slot
+        """
+        hour = dt.hour
+        minute = dt.minute
+        
+        # Determine which slot this time falls into
+        if hour < 9 or (hour == 9 and minute < 30):
+            return 0  # 9am slot
+        elif hour < 11 or (hour == 11 and minute < 30):
+            return 1  # 11am slot
+        elif hour < 13 or (hour == 13 and minute < 30):
+            return 2  # 1pm slot
+        elif hour < 15 or (hour == 15 and minute < 30):
+            return 3  # 3pm slot
+        else:
+            return 3  # Default to 3pm slot for late times
     
     def format_schedule_summary(self, scheduled_times: List[datetime]) -> str:
         """
