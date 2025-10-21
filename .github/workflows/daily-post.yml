@@ -179,11 +179,12 @@ jobs:
       run: |
         python main.py --post-daily
     
-    - name: Cleanup artifacts folder (post-run)
-      if: false
+    - name: Cleanup used image file (post-run)
+      if: success()
       run: |
-        # Disabled: Images should be preserved for future runs
-        # rm -rf artifacts/images || true
+        # Only delete the specific image file that was used for posting
+        # The main.py script handles individual image cleanup after successful posting
+        echo "Image cleanup is handled by main.py after successful posting"
     
     - name: Upload database as artifact
       uses: actions/upload-artifact@v4
