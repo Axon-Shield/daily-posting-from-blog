@@ -182,12 +182,13 @@ jobs:
             conn = sqlite3.connect('./data/posts.db')
             cursor = conn.cursor()
             
-            # Get all messages with image URLs
+            # Get all messages with image URLs (join with blog_posts to get title)
             cursor.execute('''
-                SELECT id, image_url, blog_title, message_text
-                FROM posted_messages 
-                WHERE image_url IS NOT NULL
-                ORDER BY id DESC
+                SELECT pm.id, pm.image_url, bp.title, pm.message_text
+                FROM posted_messages pm
+                JOIN blog_posts bp ON pm.blog_post_id = bp.id
+                WHERE pm.image_url IS NOT NULL
+                ORDER BY pm.id DESC
                 LIMIT 10
             ''')
             
