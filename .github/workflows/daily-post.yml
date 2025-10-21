@@ -180,9 +180,10 @@ jobs:
         python main.py --post-daily
     
     - name: Cleanup artifacts folder (post-run)
-      if: always()
+      if: false
       run: |
-        rm -rf artifacts/images || true
+        # Disabled: Images should be preserved for future runs
+        # rm -rf artifacts/images || true
     
     - name: Upload database as artifact
       uses: actions/upload-artifact@v4
