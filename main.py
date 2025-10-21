@@ -268,7 +268,7 @@ class BlogPostAutomation:
                 print("🎨 Generating new image...")
                 try:
                     # Create image prompt
-                    prompt = self.content_extractor.create_image_prompt(blog_title, message_text)
+                    prompt = self.db.image_generator.create_image_prompt(blog_title, message_text)
                     print(f"Prompt: {prompt[:100]}...")
                     
                     # Generate image
