@@ -2,23 +2,24 @@ name: Daily Social Media Post
 
 on:
   schedule:
-    # Check for scheduled posts 4 times daily at posting times (Eastern Time):
-    # 9:00 AM EST = 14:00 UTC (EST) / 13:00 UTC (EDT)
-    # 11:00 AM EST = 16:00 UTC (EST) / 15:00 UTC (EDT)  
-    # 1:00 PM EST = 18:00 UTC (EST) / 17:00 UTC (EDT)
-    # 3:00 PM EST = 20:00 UTC (EST) / 19:00 UTC (EDT)
+    # Reliable posting schedule with buffer time for GitHub cron variance
+    # Target: 9:00 AM ET posting with 15-minute buffer
+    # 8:45 AM EST = 13:45 UTC (EST) / 12:45 UTC (EDT)
+    # 10:45 AM EST = 15:45 UTC (EST) / 14:45 UTC (EDT)  
+    # 12:45 PM EST = 17:45 UTC (EST) / 16:45 UTC (EDT)
+    # 2:45 PM EST = 19:45 UTC (EST) / 18:45 UTC (EDT)
     
-    # Winter schedule (EST - Nov-Mar)
-    - cron: '0 14 * 11-12,1-3 1-5'  # 9am EST, Mon-Fri
-    - cron: '0 16 * 11-12,1-3 1-5'  # 11am EST, Mon-Fri
-    - cron: '0 18 * 11-12,1-3 1-5'  # 1pm EST, Mon-Fri
-    - cron: '0 20 * 11-12,1-3 1-5'  # 3pm EST, Mon-Fri
+    # Winter schedule (EST - Nov-Mar) - 15 min buffer before target time
+    - cron: '45 13 * 11-12,1-3 1-5'  # 8:45am EST, Mon-Fri
+    - cron: '45 15 * 11-12,1-3 1-5'  # 10:45am EST, Mon-Fri
+    - cron: '45 17 * 11-12,1-3 1-5'  # 12:45pm EST, Mon-Fri
+    - cron: '45 19 * 11-12,1-3 1-5'  # 2:45pm EST, Mon-Fri
     
-    # Summer schedule (EDT - Mar-Nov)  
-    - cron: '0 13 * 4-10 1-5'  # 9am EDT, Mon-Fri
-    - cron: '0 15 * 4-10 1-5'  # 11am EDT, Mon-Fri
-    - cron: '0 17 * 4-10 1-5'  # 1pm EDT, Mon-Fri
-    - cron: '0 19 * 4-10 1-5'  # 3pm EDT, Mon-Fri
+    # Summer schedule (EDT - Mar-Nov) - 15 min buffer before target time
+    - cron: '45 12 * 4-10 1-5'  # 8:45am EDT, Mon-Fri
+    - cron: '45 14 * 4-10 1-5'  # 10:45am EDT, Mon-Fri
+    - cron: '45 16 * 4-10 1-5'  # 12:45pm EDT, Mon-Fri
+    - cron: '45 18 * 4-10 1-5'  # 2:45pm EDT, Mon-Fri
   
   # Allow manual trigger
   workflow_dispatch:
