@@ -87,6 +87,14 @@ class BlogPostAutomation:
                 
                 print(f"Extracted {len(messages)} messages")
                 
+                # Check if post already exists before processing
+                existing_post_id = self.db.get_post_id_by_url(post['url'])
+                
+                if existing_post_id:
+                    print(f"⏭️  Post already exists with ID: {existing_post_id}")
+                    skipped_count += 1
+                    continue
+                
                 # Try to save to database (may be skipped if schedule is full)
                 post_id = self.db.save_blog_post(
                     url=post['url'],

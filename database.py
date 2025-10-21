@@ -57,6 +57,14 @@ class Database:
             
             conn.commit()
     
+    def get_post_id_by_url(self, url: str) -> Optional[int]:
+        """Get post ID by URL if it exists."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM blog_posts WHERE post_url = ?", (url,))
+            result = cursor.fetchone()
+            return result[0] if result else None
+    
     def save_blog_post(self, url: str, title: str, content: str, 
                       published_date: str, messages: List[str]) -> Optional[int]:
         """
