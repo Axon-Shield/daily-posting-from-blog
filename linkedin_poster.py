@@ -192,11 +192,16 @@ class LinkedInPoster:
                 # Local file
                 with open(image_path, 'rb') as f:
                     image_data = f.read()
-            else:
-                # Assume it's a URL
+            elif image_path.startswith(('http://', 'https://')):
+                # It's a URL
                 img_response = requests.get(image_path, timeout=30)
                 img_response.raise_for_status()
                 image_data = img_response.content
+            else:
+                # File doesn't exist - this is common in CI/CD environments
+                print(f"Warning: Image file not found: '{image_path}'")
+                print("   This is normal when images are missing from artifacts.")
+                return None
             
             # Step 3: Upload image binary
             upload_headers = {

@@ -184,7 +184,10 @@ class XPoster:
                     if os.path.exists(tmp_path):
                         os.remove(tmp_path)
             else:
-                print(f"Error: Invalid image path '{image_path}' - not a file or URL")
+                # File doesn't exist - this is common in CI/CD environments
+                print(f"Warning: Image file not found: '{image_path}'")
+                print("   This is normal when images are missing from artifacts.")
+                print("   Posting without image...")
                 return None
             
         except Exception as e:

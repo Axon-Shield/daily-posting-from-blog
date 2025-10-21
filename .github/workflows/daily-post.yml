@@ -108,7 +108,7 @@ jobs:
       with:
         script: |
           // Get runs from all workflows that might have images
-          const workflows = ['fetch-posts.yml', 'daily-post.yml', 'clear-unposted.yml'];
+          const workflows = ['fetch-posts.yml', 'daily-post.yml', 'database-status.yml'];
           const allRuns = [];
           
           for (const workflow of workflows) {
@@ -155,6 +155,72 @@ jobs:
         echo "Created at: ${{ steps.get_latest_images.outputs.created_at }}"
         gh run download ${{ steps.get_latest_images.outputs.run_id }} --name images --dir artifacts/images/ || echo "images artifact not found"
       continue-on-error: true
+    
+    - name: Prepare artifact directory
+      run: |
+        mkdir -p artifacts/images
+    
+    - name: Check image artifacts and validate database entries
+      env:
+        DATABASE_PATH: ./data/posts.db
+        IMAGE_OUTPUT_DIR: ./artifacts/images
+        PYTHONUNBUFFERED: 1
+      run: |
+        echo "=== IMAGE ARTIFACT DIAGNOSTICS ==="
+        echo "Checking artifacts/images directory..."
+        ls -la artifacts/images/ || echo "No artifacts/images directory found"
+        echo ""
+        echo "Checking for image files..."
+        find artifacts/images -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" 2>/dev/null || echo "No image files found"
+        echo ""
+        echo "=== DATABASE IMAGE VALIDATION ==="
+        python3 -c "
+        import sqlite3
+        import os
+        
+        if os.path.exists('./data/posts.db'):
+            conn = sqlite3.connect('./data/posts.db')
+            cursor = conn.cursor()
+            
+            # Get all messages with image URLs
+            cursor.execute('''
+                SELECT id, image_url, blog_title, message_text
+                FROM posted_messages 
+                WHERE image_url IS NOT NULL
+                ORDER BY id DESC
+                LIMIT 10
+            ''')
+            
+            messages = cursor.fetchall()
+            print(f'Found {len(messages)} messages with image URLs in database')
+            
+            for msg in messages:
+                msg_id, image_url, blog_title, message_text = msg
+                print(f'\\nMessage ID: {msg_id}')
+                print(f'Blog: {blog_title[:50]}...')
+                print(f'Image URL: {image_url}')
+                
+                if os.path.isfile(image_url):
+                    print('✅ Image file exists')
+                else:
+                    print('❌ Image file missing')
+                    # Check if it's in the artifacts directory
+                    if image_url.startswith('./artifacts/images/'):
+                        filename = os.path.basename(image_url)
+                        artifacts_path = f'./artifacts/images/{filename}'
+                        if os.path.isfile(artifacts_path):
+                            print(f'✅ Found in artifacts: {artifacts_path}')
+                        else:
+                            print(f'❌ Not found in artifacts: {artifacts_path}')
+                    else:
+                        print(f'❌ Path not in artifacts directory: {image_url}')
+            
+            conn.close()
+        else:
+            print('No database file found')
+        "
+        echo ""
+        echo "=== END DIAGNOSTICS ==="
     
     - name: Post daily message
       env:
