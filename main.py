@@ -227,9 +227,9 @@ class BlogPostAutomation:
     
     def regenerate_missing_images(self):
         """Regenerate images for unposted messages that have invalid image paths."""
-        print("\n" + "="*60")
+        print(f"\n{'='*60}")
         print("REGENERATING MISSING IMAGES FOR UNPOSTED MESSAGES")
-        print("="*60 + "\n")
+        print(f"{'='*60}\n")
         
         # Get all unposted messages
         unposted_messages = self.db.get_unposted_messages()
@@ -293,7 +293,7 @@ class BlogPostAutomation:
         print(f"Image regeneration completed!")
         print(f"Regenerated: {regenerated_count} images")
         print(f"Total unposted messages: {len(unposted_messages)}")
-        print("="*60 + "\n")
+        print(f"{'='*60}\n")
     
     def show_status(self):
         """Display current status of the automation."""
