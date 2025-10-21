@@ -164,6 +164,68 @@ jobs:
           " || echo "0"
           echo ""
           
+          # Check image file validity
+          echo "🖼️  IMAGE FILE VALIDATION:"
+          echo "=========================="
+          sqlite3 ./data/posts.db "
+            SELECT 
+              pm.id as msg_id,
+              bp.title as blog_title,
+              pm.message_index + 1 as msg_num,
+              pm.image_url,
+              CASE 
+                WHEN pm.image_url IS NULL THEN '❌ No Image'
+                WHEN pm.image_url = '' THEN '❌ Empty Path'
+                ELSE '📁 ' || pm.image_url
+              END as image_status
+            FROM posted_messages pm
+            JOIN blog_posts bp ON pm.blog_post_id = bp.id
+            WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
+            ORDER BY pm.scheduled_for ASC
+          " -header -column || echo "No unposted messages found"
+          echo ""
+          
+          # Check if image files actually exist
+          echo "📂 IMAGE FILE EXISTENCE CHECK:"
+          echo "=============================="
+          sqlite3 ./data/posts.db "
+            SELECT 
+              pm.id as msg_id,
+              bp.title as blog_title,
+              pm.message_index + 1 as msg_num,
+              pm.image_url,
+              CASE 
+                WHEN pm.image_url IS NULL THEN '❌ No Image Path'
+                WHEN pm.image_url = '' THEN '❌ Empty Path'
+                ELSE '🔍 Checking: ' || pm.image_url
+              END as file_check
+            FROM posted_messages pm
+            JOIN blog_posts bp ON pm.blog_post_id = bp.id
+            WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
+            ORDER BY pm.scheduled_for ASC
+          " -header -column || echo "No unposted messages found"
+          echo ""
+          
+          # Count invalid images
+          echo "📊 IMAGE VALIDATION SUMMARY:"
+          echo "============================"
+          echo "Messages with no image path:"
+          sqlite3 ./data/posts.db "
+            SELECT COUNT(*) 
+            FROM posted_messages 
+            WHERE posted_to_linkedin = 0 AND posted_to_x = 0 
+            AND (image_url IS NULL OR image_url = '')
+          " || echo "0"
+          echo ""
+          echo "Messages with image paths:"
+          sqlite3 ./data/posts.db "
+            SELECT COUNT(*) 
+            FROM posted_messages 
+            WHERE posted_to_linkedin = 0 AND posted_to_x = 0 
+            AND image_url IS NOT NULL AND image_url != ''
+          " || echo "0"
+          echo ""
+          
           echo "Database Schema:"
           sqlite3 ./data/posts.db ".schema"
         else
