@@ -310,46 +310,17 @@ jobs:
           " || echo "0"
           echo ""
           
-          # Count existing vs missing files
+          # Simple file existence summary
           echo "📁 FILE EXISTENCE SUMMARY:"
           echo "=========================="
-          
-          # Get all image paths and check existence
-          echo "Checking image files..."
-          existing_count=0
-          missing_count=0
-          
-          # Use a temporary file to store results
-          temp_file=$(mktemp)
+          echo "Note: Detailed file checking is shown above in 'FILE EXISTENCE VERIFICATION' section"
+          echo "Total unposted messages with image paths:"
           sqlite3 ./data/posts.db "
-            SELECT pm.image_url
+            SELECT COUNT(*)
             FROM posted_messages pm
             WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
             AND pm.image_url IS NOT NULL AND pm.image_url != ''
-          " > "$temp_file" 2>/dev/null || echo "No image paths found"
-          
-          if [[ -s "$temp_file" ]]; then
-            while IFS= read -r image_url; do
-              if [[ -n "$image_url" && "$image_url" != "image_url" ]]; then
-                echo "Checking: $image_url"
-                if [[ -f "$image_url" ]]; then
-                  echo "✅ File exists: $image_url"
-                  ((existing_count++))
-                else
-                  echo "❌ File missing: $image_url"
-                  ((missing_count++))
-                fi
-              fi
-            done < "$temp_file"
-          else
-            echo "No image paths found in database"
-          fi
-          
-          # Clean up temp file
-          rm -f "$temp_file"
-          
-          echo "Files that exist: $existing_count"
-          echo "Files that are missing: $missing_count"
+          " || echo "0"
           echo ""
           
           echo "Database Schema:"
