@@ -102,13 +102,43 @@ jobs:
         gh run download ${{ steps.get_latest_db.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
       continue-on-error: true
 
-    - name: Download images artifact from latest run
-      if: steps.get_latest_db.outputs.run_id != ''
+    - name: Find latest fetch-posts run for images
+      id: get_images_run
+      uses: actions/github-script@v7
+      with:
+        script: |
+          try {
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'fetch-posts.yml',
+              branch: 'main',
+              per_page: 5,
+              status: 'success'
+            });
+            
+            if (runs.data.workflow_runs && runs.data.workflow_runs.length > 0) {
+              const latestRun = runs.data.workflow_runs[0];
+              console.log(`Latest fetch-posts run: ${latestRun.id} (${latestRun.created_at})`);
+              core.setOutput('run_id', String(latestRun.id));
+              core.setOutput('created_at', latestRun.created_at);
+            } else {
+              console.log('No successful fetch-posts runs found');
+              core.setOutput('run_id', '');
+            }
+          } catch (error) {
+            console.log(`Error fetching fetch-posts runs: ${error.message}`);
+            core.setOutput('run_id', '');
+          }
+
+    - name: Download images artifact from fetch-posts
+      if: steps.get_images_run.outputs.run_id != ''
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        echo "Downloading images artifact from ${{ steps.get_latest_db.outputs.workflow_name }} run ${{ steps.get_latest_db.outputs.run_id }}"
-        gh run download ${{ steps.get_latest_db.outputs.run_id }} --name images --dir artifacts/images/ || echo "images artifact not found"
+        echo "Downloading images artifact from fetch-posts run ${{ steps.get_images_run.outputs.run_id }}"
+        echo "Created at: ${{ steps.get_images_run.outputs.created_at }}"
+        gh run download ${{ steps.get_images_run.outputs.run_id }} --name images --dir artifacts/images/ || echo "images artifact not found"
       continue-on-error: true
     
     - name: Post daily message
