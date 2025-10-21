@@ -108,7 +108,7 @@ jobs:
       with:
         script: |
           // Get runs from all workflows that might have images
-          const workflows = ['fetch-posts.yml', 'daily-post.yml'];
+          const workflows = ['fetch-posts.yml', 'daily-post.yml', 'clear-unposted.yml'];
           const allRuns = [];
           
           for (const workflow of workflows) {
