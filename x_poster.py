@@ -154,13 +154,17 @@ class XPoster:
             return None
         
         try:
+            # Convert relative paths to absolute paths
+            if not os.path.isabs(image_path):
+                image_path = os.path.abspath(image_path)
+            
             # Check if it's a local file or URL
             if os.path.isfile(image_path):
                 # Already a local file, upload directly
                 media = self.api.media_upload(filename=image_path)
                 print(f"✓ Uploaded image to X: {media.media_id}")
                 return str(media.media_id)
-            else:
+            elif image_path.startswith(('http://', 'https://')):
                 # It's a URL, download first
                 response = requests.get(image_path, timeout=30)
                 response.raise_for_status()
@@ -179,6 +183,9 @@ class XPoster:
                     # Clean up temporary file
                     if os.path.exists(tmp_path):
                         os.remove(tmp_path)
+            else:
+                print(f"Error: Invalid image path '{image_path}' - not a file or URL")
+                return None
             
         except Exception as e:
             print(f"Error uploading image to X: {e}")
