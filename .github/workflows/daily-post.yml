@@ -210,6 +210,41 @@ jobs:
       run: |
         mkdir -p artifacts/images
     
+    - name: Pre-posting database status
+      env:
+        DATABASE_PATH: ./data/posts.db
+      run: |
+        echo "=== PRE-POSTING DATABASE STATUS ==="
+        if [ -f "data/posts.db" ]; then
+          echo "Next message to post:"
+          sqlite3 data/posts.db "
+            SELECT 
+              pm.id,
+              bp.title,
+              pm.message_index + 1 as msg_num,
+              pm.posted_to_linkedin,
+              pm.posted_to_x,
+              substr(pm.message_text, 1, 50) as preview
+            FROM posted_messages pm
+            JOIN blog_posts bp ON pm.blog_post_id = bp.id
+            WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
+            ORDER BY pm.scheduled_for ASC
+            LIMIT 1;
+          " -header -column 2>/dev/null || echo "Could not query next message"
+          
+          echo ""
+          echo "Posting status summary:"
+          sqlite3 data/posts.db "
+            SELECT 
+              COUNT(*) as total,
+              SUM(CASE WHEN posted_to_linkedin = 1 THEN 1 ELSE 0 END) as linkedin_posted,
+              SUM(CASE WHEN posted_to_x = 1 THEN 1 ELSE 0 END) as x_posted,
+              SUM(CASE WHEN posted_to_linkedin = 1 AND posted_to_x = 1 THEN 1 ELSE 0 END) as fully_posted
+            FROM posted_messages;
+          " -header -column 2>/dev/null || echo "Could not query posting status"
+        fi
+        echo "=== END PRE-POSTING STATUS ==="
+    
     - name: Check image artifacts and validate database entries
       env:
         DATABASE_PATH: ./data/posts.db
@@ -298,6 +333,41 @@ jobs:
         TEST_MODE: ${{ vars.TEST_MODE || 'false' }}
       run: |
         python main.py --post-daily
+    
+    - name: Post-posting database verification
+      env:
+        DATABASE_PATH: ./data/posts.db
+      run: |
+        echo "=== POST-POSTING DATABASE VERIFICATION ==="
+        if [ -f "data/posts.db" ]; then
+          echo "Posting status after posting:"
+          sqlite3 data/posts.db "
+            SELECT 
+              COUNT(*) as total,
+              SUM(CASE WHEN posted_to_linkedin = 1 THEN 1 ELSE 0 END) as linkedin_posted,
+              SUM(CASE WHEN posted_to_x = 1 THEN 1 ELSE 0 END) as x_posted,
+              SUM(CASE WHEN posted_to_linkedin = 1 AND posted_to_x = 1 THEN 1 ELSE 0 END) as fully_posted
+            FROM posted_messages;
+          " -header -column 2>/dev/null || echo "Could not query posting status"
+          
+          echo ""
+          echo "Recently posted messages:"
+          sqlite3 data/posts.db "
+            SELECT 
+              pm.id,
+              bp.title,
+              pm.message_index + 1 as msg_num,
+              pm.posted_to_linkedin,
+              pm.posted_to_x,
+              pm.posted_at
+            FROM posted_messages pm
+            JOIN blog_posts bp ON pm.blog_post_id = bp.id
+            WHERE pm.posted_at IS NOT NULL
+            ORDER BY pm.posted_at DESC
+            LIMIT 5;
+          " -header -column 2>/dev/null || echo "Could not query posted messages"
+        fi
+        echo "=== END POST-POSTING VERIFICATION ==="
     
     - name: Cleanup used image file (post-run)
       if: success()
