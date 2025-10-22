@@ -173,13 +173,21 @@ class BlogPostAutomation:
                 print(f"✗ Error posting to LinkedIn: {e}")
         elif os.getenv('TEST_MODE', '').lower() == 'true':
             print("⊘ LinkedIn posting disabled in TEST_MODE")
+            # Mark as posted so message doesn't get stuck
+            if not message_data['posted_to_linkedin']:
+                self.db.mark_posted_to_linkedin(message_data['id'])
         elif not Config.LINKEDIN_ENABLED:
             print("⊘ LinkedIn posting disabled (set LINKEDIN_ENABLED=true to enable)")
+            # Mark as posted so message doesn't get stuck
+            if not message_data['posted_to_linkedin']:
+                self.db.mark_posted_to_linkedin(message_data['id'])
         else:
             if message_data['posted_to_linkedin']:
                 print("✓ Already posted to LinkedIn")
             else:
                 print("⊘ LinkedIn not configured (skipping)")
+                # Mark as posted so message doesn't get stuck
+                self.db.mark_posted_to_linkedin(message_data['id'])
         
         # Post to X (Twitter)
         if not message_data['posted_to_x'] and Config.X_API_KEY and not os.getenv('TEST_MODE', '').lower() == 'true':
@@ -207,11 +215,17 @@ class BlogPostAutomation:
                 print(f"✗ Error posting to X: {e}")
         elif os.getenv('TEST_MODE', '').lower() == 'true':
             print("⊘ X (Twitter) posting disabled in TEST_MODE")
+            # Mark as posted so message doesn't get stuck
+            if not message_data['posted_to_x']:
+                self.db.mark_posted_to_x(message_data['id'])
         else:
             if message_data['posted_to_x']:
                 print("✓ Already posted to X")
             else:
                 print("⊘ X (Twitter) not configured (skipping)")
+                # Mark as posted so message doesn't get stuck
+                if not message_data['posted_to_x']:
+                    self.db.mark_posted_to_x(message_data['id'])
         
         # Clean up image file after any successful posting
         try:
