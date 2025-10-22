@@ -105,7 +105,23 @@ jobs:
       run: |
         echo "Downloading latest database from ${{ steps.get_latest_db.outputs.workflow_name }} run ${{ steps.get_latest_db.outputs.run_id }}"
         echo "Created at: ${{ steps.get_latest_db.outputs.created_at }}"
+        echo "Artifact ID: ${{ steps.get_latest_db.outputs.artifact_id }}"
         gh run download ${{ steps.get_latest_db.outputs.run_id }} --name posts-database --dir data/ || echo "posts-database not found"
+        
+        # Verify database was downloaded
+        if [ -f "data/posts.db" ]; then
+          echo "✅ Database downloaded successfully"
+          echo "Database size: $(du -h data/posts.db | cut -f1)"
+          echo "Database last modified: $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' data/posts.db 2>/dev/null || stat -c '%y' data/posts.db 2>/dev/null)"
+          
+          # Show database stats
+          echo "Database contents:"
+          sqlite3 data/posts.db "SELECT COUNT(*) as total_posts FROM blog_posts;" 2>/dev/null || echo "Could not read blog_posts"
+          sqlite3 data/posts.db "SELECT COUNT(*) as total_messages FROM posted_messages;" 2>/dev/null || echo "Could not read posted_messages"
+          sqlite3 data/posts.db "SELECT COUNT(*) as fully_posted FROM posted_messages WHERE posted_to_linkedin = 1 AND posted_to_x = 1;" 2>/dev/null || echo "Could not read posted status"
+        else
+          echo "❌ Database file not found after download"
+        fi
       continue-on-error: true
 
     - name: Find latest images artifact from any workflow
@@ -276,6 +292,27 @@ jobs:
         path: artifacts/images
         retention-days: 90
         if-no-files-found: ignore
+    
+    - name: Pre-upload database verification
+      run: |
+        echo "=== PRE-UPLOAD DATABASE VERIFICATION ==="
+        if [ -f "data/posts.db" ]; then
+          echo "✅ Database file exists"
+          echo "Database size: $(du -h data/posts.db | cut -f1)"
+          echo "Database last modified: $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' data/posts.db 2>/dev/null || stat -c '%y' data/posts.db 2>/dev/null)"
+          echo ""
+          echo "Database posting status:"
+          sqlite3 data/posts.db "
+            SELECT 
+              COUNT(*) as total,
+              SUM(CASE WHEN posted_to_linkedin = 1 AND posted_to_x = 1 THEN 1 ELSE 0 END) as fully_posted,
+              SUM(CASE WHEN posted_to_linkedin = 0 AND posted_to_x = 0 THEN 1 ELSE 0 END) as unposted
+            FROM posted_messages;
+          " 2>/dev/null || echo "Could not query database"
+        else
+          echo "❌ Database file does not exist - nothing to upload!"
+        fi
+        echo "=== END PRE-UPLOAD VERIFICATION ==="
     
     - name: Upload database as artifact
       uses: actions/upload-artifact@v4
