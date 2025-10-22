@@ -54,9 +54,14 @@ jobs:
       with:
         script: |
           // Search for database artifact across all workflows
-          const workflows = ['fetch-posts.yml', 'daily-post.yml', 'database-status.yml'];
+          const workflows = ['daily-post.yml', 'fetch-posts.yml', 'database-status.yml'];
+          
+          console.log('=== SEARCHING FOR DATABASE ARTIFACT ===');
+          console.log(`Current run ID: ${context.runId}`);
+          console.log(`Searching workflows: ${workflows.join(', ')}`);
           
           for (const workflow of workflows) {
+            console.log(`\n--- Checking ${workflow} ---`);
             try {
               const runs = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
@@ -67,8 +72,16 @@ jobs:
                 status: 'success'
               });
               
+              console.log(`Found ${runs.data.workflow_runs.length} successful runs`);
+              
               // Check each run for the database artifact
               for (const run of runs.data.workflow_runs) {
+                // Skip the current run (can't download from itself)
+                if (run.id === context.runId) {
+                  console.log(`  Skip run ${run.id} (current run)`);
+                  continue;
+                }
+                
                 try {
                   const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
                     owner: context.repo.owner,
@@ -76,9 +89,18 @@ jobs:
                     run_id: run.id,
                   });
                   
+                  console.log(`  Run ${run.id} (${run.created_at}): ${artifacts.data.artifacts.length} artifacts`);
+                  const artifactNames = artifacts.data.artifacts.map(a => a.name).join(', ');
+                  if (artifactNames) {
+                    console.log(`    Artifacts: ${artifactNames}`);
+                  }
+                  
                   const dbArtifact = artifacts.data.artifacts.find(a => a.name === 'posts-database');
                   if (dbArtifact) {
-                    console.log(`✅ Found database in ${workflow} run ${run.id} (created: ${run.created_at})`);
+                    console.log(`\n✅ FOUND DATABASE: ${workflow} run ${run.id}`);
+                    console.log(`   Created: ${run.created_at}`);
+                    console.log(`   Artifact ID: ${dbArtifact.id}`);
+                    console.log(`   Artifact size: ${dbArtifact.size_in_bytes} bytes`);
                     core.setOutput('run_id', String(run.id));
                     core.setOutput('workflow_name', workflow);
                     core.setOutput('created_at', run.created_at);
@@ -86,15 +108,15 @@ jobs:
                     return;
                   }
                 } catch (error) {
-                  console.log(`Could not check artifacts for run ${run.id}: ${error.message}`);
+                  console.log(`  ❌ Error checking run ${run.id}: ${error.message}`);
                 }
               }
             } catch (error) {
-              console.log(`Error fetching runs for ${workflow}: ${error.message}`);
+              console.log(`❌ Error fetching runs for ${workflow}: ${error.message}`);
             }
           }
           
-          console.log('❌ No database artifact found in any recent workflow runs');
+          console.log('\n❌ No database artifact found in any recent workflow runs');
           core.setOutput('run_id', '');
           core.setOutput('artifact_id', '');
 
