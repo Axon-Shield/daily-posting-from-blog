@@ -213,6 +213,9 @@ class Database:
                 WHERE id = ?
             """, (datetime.now().isoformat(), message_id))
             conn.commit()
+            # Force write to disk
+            cursor.execute("PRAGMA wal_checkpoint(FULL)")
+            conn.commit()
     
     def mark_posted_to_x(self, message_id: int):
         """Mark a message as posted to X."""
@@ -223,6 +226,9 @@ class Database:
                 SET posted_to_x = 1, posted_at = ?
                 WHERE id = ?
             """, (datetime.now().isoformat(), message_id))
+            conn.commit()
+            # Force write to disk
+            cursor.execute("PRAGMA wal_checkpoint(FULL)")
             conn.commit()
     
     def get_all_messages_count(self) -> int:
