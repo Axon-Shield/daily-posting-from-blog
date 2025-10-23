@@ -222,6 +222,7 @@ jobs:
               pm.id,
               bp.title,
               pm.message_index + 1 as msg_num,
+              pm.scheduled_for,
               pm.posted_to_linkedin,
               pm.posted_to_x,
               substr(pm.message_text, 1, 50) as preview
@@ -231,6 +232,12 @@ jobs:
             ORDER BY pm.scheduled_for ASC
             LIMIT 1;
           " -header -column 2>/dev/null || echo "Could not query next message"
+          
+          echo ""
+          echo "Current time:"
+          date -u
+          echo "Current time in EST:"
+          TZ='America/New_York' date
           
           echo ""
           echo "Posting status summary:"
