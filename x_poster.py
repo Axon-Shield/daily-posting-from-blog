@@ -83,7 +83,7 @@ class XPoster:
         Post a tweet to X with optional image.
         
         Args:
-            text: The text content to tweet (max 280 characters)
+            text: The text content to tweet (max 25,000 characters for Premium accounts)
             image_url: Optional URL of image to attach
             
         Returns:
@@ -92,9 +92,9 @@ class XPoster:
         if not self.client:
             raise ValueError("X (Twitter) credentials not configured")
         
-        # Ensure text fits within character limit
-        if len(text) > 280:
-            text = text[:277] + "..."
+        # Ensure text fits within character limit (25,000 for Premium accounts)
+        if len(text) > 25000:
+            text = text[:24997] + "..."
         
         try:
             # Upload media if provided

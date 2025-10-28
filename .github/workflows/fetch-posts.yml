@@ -190,6 +190,23 @@ jobs:
       run: |
         python -u main.py --regenerate-missing-images
     
+    - name: Check and regenerate short unposted messages
+      # This step finds messages shorter than 280 characters that haven't been posted yet
+      # and shows how they would be regenerated with longer, more detailed content using Anthropic
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        DATABASE_PATH: ./data/posts.db
+        X_PREMIUM_ACCOUNT: ${{ vars.X_PREMIUM_ACCOUNT || 'true' }}
+        PYTHONUNBUFFERED: 1
+      run: |
+        echo "🔍 Checking for short unposted messages..."
+        echo "This step will find messages shorter than 280 characters that haven't been posted yet"
+        echo "and show how they would be regenerated with longer, more detailed content."
+        echo ""
+        python -u regenerate_short_messages.py
+        echo ""
+        echo "📊 Short message regeneration complete!"
+    
     - name: Upload generated images artifact
       if: ${{ hashFiles('artifacts/images/**') != '' }}
       uses: actions/upload-artifact@v4

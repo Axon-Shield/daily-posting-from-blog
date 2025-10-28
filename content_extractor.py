@@ -1,6 +1,7 @@
 """
 AI-powered content extraction using Anthropic Claude API.
 """
+import os
 from anthropic import Anthropic
 from typing import List
 from config import Config
@@ -66,10 +67,11 @@ Blog Content:
 Please extract {num_messages} distinct, engaging messaging points from this blog post. Each message should:
 1. Be standalone and make sense without context
 2. Be suitable for both LinkedIn and X (Twitter)
-3. Be between 150-250 characters for maximum engagement
+3. Be between 100-200 words for optimal engagement and readability
 4. Highlight a key insight, statistic, or takeaway from the post
 5. Be written in an engaging, professional tone
 6. Include a call-to-action or thought-provoking element where appropriate
+7. Provide enough detail to be valuable while remaining concise
 
 Format your response as a numbered list (1. 2. 3. etc.) with one message per line.
 Do not include hashtags or emojis - I will add those when posting.
@@ -131,21 +133,57 @@ Messages:"""
             return enhanced
         
         elif platform == 'x':
-            # X has character limit, so be more conservative
-            max_length = 280 - len(blog_url) - 10  # Leave room for URL and spacing
+            # Check if Premium account is enabled for longer messages
+            # Reload from environment to get current value
+            is_premium = os.getenv('X_PREMIUM_ACCOUNT', 'true').lower() == 'true'
             
-            if len(message) > max_length:
-                message = message[:max_length-3] + "..."
+            # Calculate word limits based on account type
+            if is_premium:
+                # Premium accounts: allow up to ~5000 words (well within 25,000 char limit)
+                max_words = 5000
+            else:
+                # Standard accounts: limit to ~35 words to stay within 280 character limit
+                max_words = 35
             
+            # For standard accounts, truncate message before adding URL and hashtags
+            if not is_premium:
+                # Account for URL length and some buffer for hashtags
+                url_length = len(blog_url) + 4  # URL + "\n\n"
+                hashtag_buffer = 50  # Buffer for potential hashtags
+                available_chars = 280 - url_length - hashtag_buffer
+                
+                # Truncate the original message to fit
+                if len(message) > available_chars:
+                    message = message[:available_chars-3] + "..."
+            
+            # Create enhanced message with URL
             enhanced = f"{message}\n\n{blog_url}"
             
-            # Add hashtags if they fit
+            # Add hashtags if they fit within character limits
             if hashtags:
-                hashtag_str = " ".join(f"#{tag}" for tag in hashtags[:3])  # Limit to 3 hashtags
-                if len(enhanced) + len(hashtag_str) + 2 <= 280:
+                hashtag_limit = 10 if is_premium else 3  # More hashtags allowed for Premium
+                hashtag_str = " ".join(f"#{tag}" for tag in hashtags[:hashtag_limit])
+                
+                # Check if hashtags fit within character limits
+                char_limit = 25000 if is_premium else 280
+                if len(enhanced) + len(hashtag_str) + 2 <= char_limit:
                     enhanced += "\n" + hashtag_str
             
             return enhanced
         
         return message
+    
+    def _count_words(self, text: str) -> int:
+        """Count the number of words in a text."""
+        return len(text.split())
+    
+    def _truncate_to_word_limit(self, text: str, max_words: int) -> str:
+        """Truncate text to a maximum number of words."""
+        words = text.split()
+        if len(words) <= max_words:
+            return text
+        
+        # Truncate and add ellipsis
+        truncated_words = words[:max_words-1]
+        return ' '.join(truncated_words) + '...'
 
