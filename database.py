@@ -401,4 +401,15 @@ class Database:
                 (image_path, message_id)
             )
             conn.commit()
+    
+    def update_message_text(self, message_id: int, new_text: str):
+        """Update the message text for a specific message."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE posted_messages SET message_text = ? WHERE id = ?",
+                (new_text, message_id)
+            )
+            conn.commit()
+            print(f"✅ Updated message {message_id} in database")
 

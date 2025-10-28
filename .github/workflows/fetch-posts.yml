@@ -192,7 +192,7 @@ jobs:
     
     - name: Check and regenerate short unposted messages
       # This step finds messages shorter than 280 characters that haven't been posted yet
-      # and shows how they would be regenerated with longer, more detailed content using Anthropic
+      # and regenerates them with longer, more detailed content using Anthropic, then updates the database
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         DATABASE_PATH: ./data/posts.db
@@ -201,11 +201,11 @@ jobs:
       run: |
         echo "🔍 Checking for short unposted messages..."
         echo "This step will find messages shorter than 280 characters that haven't been posted yet"
-        echo "and show how they would be regenerated with longer, more detailed content."
+        echo "and regenerate them with longer, more detailed content, then update the database."
         echo ""
         python -u regenerate_short_messages.py
         echo ""
-        echo "📊 Short message regeneration complete!"
+        echo "📊 Short message regeneration and database update complete!"
     
     - name: Upload generated images artifact
       if: ${{ hashFiles('artifacts/images/**') != '' }}

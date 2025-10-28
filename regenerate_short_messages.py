@@ -150,6 +150,13 @@ def main():
             char_diff = len(new_text) - len(original_text)
             word_diff = extractor._count_words(new_text) - extractor._count_words(original_text)
             print(f"📈 Improvement: +{char_diff} characters, +{word_diff} words")
+            
+            # Update the database with the new message
+            try:
+                db.update_message_text(msg_id, new_text)
+                print(f"💾 Message {msg_id} updated in database")
+            except Exception as e:
+                print(f"❌ Failed to update database: {e}")
         else:
             print("❌ Failed to regenerate message")
         
@@ -157,8 +164,8 @@ def main():
         print()
     
     print(f"🎉 Processed {len(short_messages)} messages")
-    print("💡 Note: Messages were not updated in the database - this was a preview run")
-    print("🔧 To actually update messages, modify this script to call db.update_message_text()")
+    print("💾 All regenerated messages have been updated in the database")
+    print("📝 Short messages have been replaced with longer, more detailed content")
 
 if __name__ == "__main__":
     main()
