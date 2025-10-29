@@ -191,7 +191,7 @@ class Database:
             print(f"   Fully posted messages: {fully_posted_count}")
             
             # Show next few scheduled messages
-            print("\n📅 Next 5 Scheduled Unposted Messages:")
+            print("\n📅 Next 5 Scheduled Unposted Messages (today or later):")
             cursor.execute("""
                 SELECT 
                     pm.id,
@@ -204,6 +204,7 @@ class Database:
                 JOIN blog_posts bp ON pm.blog_post_id = bp.id
                 WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
                   AND pm.scheduled_for IS NOT NULL
+                  AND date(pm.scheduled_for) >= date('now')
                 ORDER BY pm.scheduled_for ASC
                 LIMIT 5
             """)
@@ -217,7 +218,9 @@ class Database:
             
             # Find next scheduled message that's due and not posted to any platform
             print("\n🔍 Executing main query:")
-            print("   Query: SELECT messages WHERE posted_to_linkedin=0 AND posted_to_x=0 AND scheduled_for IS NOT NULL")
+            print("   Query: SELECT messages WHERE posted_to_linkedin=0 AND posted_to_x=0")
+            print("          AND scheduled_for IS NOT NULL")
+            print("          AND date(scheduled_for) >= date('now')  -- Only today or later")
             print("   ORDER BY scheduled_for ASC LIMIT 1")
             
             cursor.execute("""
@@ -236,6 +239,7 @@ class Database:
                 JOIN blog_posts bp ON pm.blog_post_id = bp.id
                 WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
                   AND pm.scheduled_for IS NOT NULL
+                  AND date(pm.scheduled_for) >= date('now')
                 ORDER BY pm.scheduled_for ASC
                 LIMIT 1
             """)
@@ -243,7 +247,8 @@ class Database:
             row = cursor.fetchone()
             if not row:
                 print("\n❌ Query Result: No message found")
-                print("   Reason: No unposted messages with scheduled_for set")
+                print("   Reason: No unposted messages scheduled for today or later")
+                print("   (Messages scheduled for past dates are ignored)")
                 print("="*60 + "\n")
                 return None
             
