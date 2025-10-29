@@ -224,21 +224,27 @@ class Database:
                 count = cursor.fetchone()[0]
                 print(f"   Total unposted messages with scheduled_for: {count}")
                 
-                # Debug: Check if date extraction is working
+                # Debug: Check if date extraction is working and why messages aren't matching
                 cursor.execute("""
-                    SELECT id, scheduled_for, date(substr(scheduled_for, 1, 10)) as date_part
+                    SELECT 
+                        id, 
+                        scheduled_for, 
+                        substr(scheduled_for, 1, 10) as date_part,
+                        date(substr(scheduled_for, 1, 10)) as sqlite_date
                     FROM posted_messages 
                     WHERE posted_to_linkedin = 0 AND posted_to_x = 0
                       AND scheduled_for IS NOT NULL
-                    ORDER BY id DESC
-                    LIMIT 5
+                    ORDER BY scheduled_for ASC
+                    LIMIT 10
                 """)
                 samples = cursor.fetchall()
                 if samples:
-                    print(f"   Sample messages (latest 5):")
-                    for msg_id, sched, date_part in samples:
-                        comparison = f"'{date_part}' >= '{current_date}' = {date_part >= current_date}"
-                        print(f"      ID {msg_id}: {sched} → date={date_part} ({comparison})")
+                    print(f"   Next 10 unposted messages (by scheduled_for):")
+                    for msg_id, sched, date_part, sqlite_date in samples:
+                        passes_filter = sqlite_date >= current_date
+                        status = "✅" if passes_filter else "❌"
+                        print(f"      {status} ID {msg_id}: {sched} → date_part='{date_part}', sqlite_date='{sqlite_date}'")
+                        print(f"         Comparison: '{sqlite_date}' >= '{current_date}' = {passes_filter}")
                 
                 return None
             
