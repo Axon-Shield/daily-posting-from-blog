@@ -155,8 +155,24 @@ class Database:
     
     def get_next_message_to_post(self) -> Optional[Dict]:
         """Get the next message that needs to be posted (based on schedule)."""
+        import os
+        
+        # Debug: Show database file info
+        print(f"\n📂 Database Info:")
+        print(f"   Path: {self.db_path}")
+        print(f"   Exists: {os.path.exists(self.db_path)}")
+        if os.path.exists(self.db_path):
+            print(f"   Size: {os.path.getsize(self.db_path)} bytes")
+            print(f"   Modified: {datetime.fromtimestamp(os.path.getmtime(self.db_path))}")
+        print()
+        
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
+            
+            # Get total count of all messages
+            cursor.execute("SELECT COUNT(*) FROM posted_messages")
+            total_count = cursor.fetchone()[0]
+            print(f"📊 Total messages in database: {total_count}")
             
             # Get current date in Eastern timezone for comparison
             from pytz import timezone
@@ -183,7 +199,7 @@ class Database:
                 for msg_id, sched, linkedin, x in debug_messages:
                     print(f"   - ID {msg_id}: {sched} (L:{linkedin}, X:{x})")
             else:
-                print(f"   No unposted messages found")
+                print(f"   No messages found in database!")
             print()
             
             print(f"\n🔍 Querying for unposted messages with scheduled_for >= {current_date}...")
