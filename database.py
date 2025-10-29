@@ -185,10 +185,50 @@ class Database:
             
             cursor.execute("""
                 SELECT COUNT(*) FROM posted_messages 
+                WHERE posted_to_linkedin = 0 AND posted_to_x = 0 
+                AND scheduled_for IS NOT NULL
+                AND date(scheduled_for) >= date('now')
+            """)
+            scheduled_unposted_today_plus = cursor.fetchone()[0]
+            print(f"   Scheduled unposted messages (today+): {scheduled_unposted_today_plus}")
+            
+            cursor.execute("""
+                SELECT COUNT(*) FROM posted_messages 
                 WHERE posted_to_linkedin = 1 AND posted_to_x = 1
             """)
             fully_posted_count = cursor.fetchone()[0]
             print(f"   Fully posted messages: {fully_posted_count}")
+            
+            # Show SQLite's current date
+            cursor.execute("SELECT date('now')")
+            sqlite_today = cursor.fetchone()[0]
+            print(f"\n📆 SQLite date('now'): {sqlite_today}")
+            
+            # Show ALL unposted messages first (before date filter)
+            print("\n📋 ALL Scheduled Unposted Messages (no date filter):")
+            cursor.execute("""
+                SELECT 
+                    pm.id,
+                    pm.scheduled_for,
+                    date(pm.scheduled_for) as date_part,
+                    pm.posted_to_linkedin,
+                    pm.posted_to_x,
+                    bp.title
+                FROM posted_messages pm
+                JOIN blog_posts bp ON pm.blog_post_id = bp.id
+                WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
+                  AND pm.scheduled_for IS NOT NULL
+                ORDER BY pm.scheduled_for ASC
+                LIMIT 10
+            """)
+            all_unposted = cursor.fetchall()
+            if all_unposted:
+                for msg in all_unposted:
+                    msg_id, scheduled_for, date_part, linkedin, x, title = msg
+                    comparison = "✅" if date_part >= sqlite_today else "❌"
+                    print(f"   {comparison} ID {msg_id}: {scheduled_for} (date: {date_part}) | {title[:40]}...")
+            else:
+                print("   (none found)")
             
             # Show next few scheduled messages
             print("\n📅 Next 5 Scheduled Unposted Messages (today or later):")
