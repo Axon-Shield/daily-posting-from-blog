@@ -164,32 +164,30 @@ class Database:
             current_time = datetime.now(eastern)
             current_date = current_time.date().isoformat()  # e.g., '2025-10-29'
             
-            # Debug: Show what messages exist
-            print(f"\n🔍 DEBUG: Looking for messages scheduled for {current_date} or later")
+            # Debug: Show messages scheduled for today or later
+            print(f"\n🔍 Messages scheduled for {current_date} or later:")
             cursor.execute("""
                 SELECT 
                     pm.id,
                     pm.scheduled_for,
-                    substr(pm.scheduled_for, 1, 10) as date_part,
                     pm.posted_to_linkedin,
-                    pm.posted_to_x,
-                    bp.title
+                    pm.posted_to_x
                 FROM posted_messages pm
-                JOIN blog_posts bp ON pm.blog_post_id = bp.id
-                WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
+                WHERE pm.posted_to_linkedin = 0 
+                  AND pm.posted_to_x = 0
                   AND pm.scheduled_for IS NOT NULL
+                  AND date(substr(pm.scheduled_for, 1, 10)) >= ?
                 ORDER BY pm.scheduled_for ASC
-                LIMIT 10
-            """)
+            """, (current_date,))
             
-            all_messages = cursor.fetchall()
-            print(f"Found {len(all_messages)} unposted messages total:")
-            for msg in all_messages:
-                msg_id, sched, date_part, linkedin, x, title = msg
-                passes = "✅" if date_part >= current_date else "❌"
-                print(f"  {passes} ID {msg_id}: {sched} (date: {date_part}) | {title[:50]}")
-            
-            print(f"\nNow executing filtered query with date >= '{current_date}'")
+            debug_messages = cursor.fetchall()
+            if debug_messages:
+                print(f"   Found {len(debug_messages)} messages:")
+                for msg_id, sched, linkedin, x in debug_messages:
+                    print(f"   - ID {msg_id}: {sched} (L:{linkedin}, X:{x})")
+            else:
+                print(f"   No messages found")
+            print()
             
             cursor.execute("""
                 SELECT 
