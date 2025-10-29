@@ -172,7 +172,17 @@ class Database:
             # Get total count of all messages
             cursor.execute("SELECT COUNT(*) FROM posted_messages")
             total_count = cursor.fetchone()[0]
-            print(f"📊 Total messages in database: {total_count}")
+            
+            cursor.execute("SELECT COUNT(*) FROM posted_messages WHERE posted_to_linkedin = 1 AND posted_to_x = 1")
+            fully_posted = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM posted_messages WHERE posted_to_linkedin = 0 AND posted_to_x = 0")
+            unposted = cursor.fetchone()[0]
+            
+            print(f"📊 Database Stats:")
+            print(f"   Total messages: {total_count}")
+            print(f"   Fully posted (L+X): {fully_posted}")
+            print(f"   Unposted (neither): {unposted}")
             
             # Get current date in Eastern timezone for comparison
             from pytz import timezone
