@@ -265,8 +265,8 @@ class PostScheduler:
         """
         Check if it's time to post a scheduled message.
         
-        Uses a time window approach: posts messages scheduled for the current time slot
-        or earlier, allowing for GitHub cron variance.
+        Relaxed criteria: Posts any message scheduled from midnight today 
+        until the end of the current time window.
         
         Args:
             scheduled_time: When the message is scheduled for
@@ -289,16 +289,24 @@ class PostScheduler:
         else:
             current_time = current_time.astimezone(self.eastern)
         
-        # Get the current time slot (9am, 11am, 1pm, 3pm)
-        current_slot = self._get_current_time_slot(current_time)
-        scheduled_slot = self._get_current_time_slot(scheduled_time)
+        # Check if scheduled time is today or earlier
+        if scheduled_time.date() < current_time.date():
+            # Message was scheduled for a past date - post it
+            print(f"   ✅ Scheduled for past date ({scheduled_time.date()}) - will post now")
+            return True
         
-        slot_names = {0: "9am", 1: "11am", 2: "1pm", 3: "3pm", -1: "before 9am"}
-        print(f"   Time slot check: current={current_slot} ({slot_names.get(current_slot, 'unknown')}), scheduled={scheduled_slot} ({slot_names.get(scheduled_slot, 'unknown')})")
-        print(f"   Decision: {scheduled_slot} <= {current_slot} = {scheduled_slot <= current_slot}")
+        if scheduled_time.date() > current_time.date():
+            # Message is scheduled for a future date - don't post yet
+            print(f"   ❌ Scheduled for future date ({scheduled_time.date()}) - not ready")
+            return False
         
-        # Post if scheduled for current slot or earlier
-        return scheduled_slot <= current_slot
+        # Same date - check if scheduled time has passed
+        if scheduled_time <= current_time:
+            print(f"   ✅ Scheduled time ({scheduled_time.strftime('%H:%M')}) has passed - will post now")
+            return True
+        else:
+            print(f"   ❌ Scheduled time ({scheduled_time.strftime('%H:%M')}) hasn't arrived yet - not ready")
+            return False
     
     def _get_current_time_slot(self, dt: datetime) -> int:
         """
