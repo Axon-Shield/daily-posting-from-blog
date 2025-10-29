@@ -293,6 +293,10 @@ class PostScheduler:
         current_slot = self._get_current_time_slot(current_time)
         scheduled_slot = self._get_current_time_slot(scheduled_time)
         
+        slot_names = {0: "9am", 1: "11am", 2: "1pm", 3: "3pm", -1: "before 9am"}
+        print(f"   Time slot check: current={current_slot} ({slot_names.get(current_slot, 'unknown')}), scheduled={scheduled_slot} ({slot_names.get(scheduled_slot, 'unknown')})")
+        print(f"   Decision: {scheduled_slot} <= {current_slot} = {scheduled_slot <= current_slot}")
+        
         # Post if scheduled for current slot or earlier
         return scheduled_slot <= current_slot
     

@@ -181,6 +181,7 @@ class Database:
             
             row = cursor.fetchone()
             if not row:
+                print("❌ No unposted messages found scheduled for today or later")
                 return None
             
             # row[5] is scheduled_for, not row[4]!
@@ -192,9 +193,19 @@ class Database:
             eastern = timezone('US/Eastern')
             current_time = datetime.now(eastern)
             
+            print(f"📋 Found message ID {row[0]}: {row[8]}")
+            print(f"   Scheduled for: {scheduled_time}")
+            print(f"   Current time: {current_time}")
+            
             # Check if it's time to post
-            if not self.scheduler.is_time_to_post(scheduled_time, current_time):
+            is_ready = self.scheduler.is_time_to_post(scheduled_time, current_time)
+            print(f"   Is ready to post: {is_ready}")
+            
+            if not is_ready:
+                print("⏸️  Message found but not ready to post yet (wrong time slot)")
                 return None  # Not time yet
+            
+            print("✅ Message is ready to post!")
             
             return {
                 'id': row[0],
