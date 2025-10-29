@@ -158,6 +158,12 @@ class Database:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
+            # Get current date in Eastern timezone for comparison
+            from pytz import timezone
+            eastern = timezone('US/Eastern')
+            current_time = datetime.now(eastern)
+            current_date = current_time.date().isoformat()  # e.g., '2025-10-29'
+            
             cursor.execute("""
                 SELECT 
                     pm.id,
@@ -174,24 +180,18 @@ class Database:
                 JOIN blog_posts bp ON pm.blog_post_id = bp.id
                 WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
                   AND pm.scheduled_for IS NOT NULL
-                  AND date(pm.scheduled_for) >= date('now')
+                  AND date(substr(pm.scheduled_for, 1, 10)) >= ?
                 ORDER BY pm.scheduled_for ASC
                 LIMIT 1
-            """)
+            """, (current_date,))
             
             row = cursor.fetchone()
             if not row:
-                print("❌ No unposted messages found scheduled for today or later")
+                print(f"❌ No unposted messages found scheduled for today ({current_date}) or later")
                 return None
             
             # row[5] is scheduled_for, not row[4]!
             scheduled_time = datetime.fromisoformat(row[5])
-            
-            # Ensure we're comparing timezone-aware datetimes
-            # scheduled_time from DB may have timezone, current_time needs it too
-            from pytz import timezone
-            eastern = timezone('US/Eastern')
-            current_time = datetime.now(eastern)
             
             print(f"📋 Found message ID {row[0]}: {row[8]}")
             print(f"   Scheduled for: {scheduled_time}")
