@@ -43,10 +43,16 @@ jobs:
       uses: actions/github-script@v7
       with:
         script: |
-          // Search for database artifact across all workflows
+          // Search for database artifact across all workflows and find the most recent one
           const workflows = ['fetch-posts.yml', 'daily-post.yml', 'database-status.yml'];
           
+          console.log('=== SEARCHING FOR MOST RECENT DATABASE ARTIFACT ===');
+          
+          let newestArtifact = null;
+          let newestTime = null;
+          
           for (const workflow of workflows) {
+            console.log(`\n--- Checking ${workflow} ---`);
             try {
               const runs = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
@@ -56,6 +62,8 @@ jobs:
                 per_page: 20,
                 status: 'success'
               });
+              
+              console.log(`Found ${runs.data.workflow_runs.length} successful runs`);
               
               // Check each run for the database artifact
               for (const run of runs.data.workflow_runs) {
@@ -68,12 +76,23 @@ jobs:
                   
                   const dbArtifact = artifacts.data.artifacts.find(a => a.name === 'posts-database');
                   if (dbArtifact) {
-                    console.log(`✅ Found database in ${workflow} run ${run.id} (created: ${run.created_at})`);
-                    core.setOutput('run_id', String(run.id));
-                    core.setOutput('workflow_name', workflow);
-                    core.setOutput('created_at', run.created_at);
-                    core.setOutput('artifact_id', String(dbArtifact.id));
-                    return;
+                    const artifactTime = new Date(run.created_at);
+                    console.log(`  Found database in run ${run.id} (${run.created_at})`);
+                    
+                    // Keep track of the newest artifact found
+                    if (!newestTime || artifactTime > newestTime) {
+                      console.log(`    → This is the newest so far!`);
+                      newestTime = artifactTime;
+                      newestArtifact = {
+                        run_id: run.id,
+                        workflow_name: workflow,
+                        created_at: run.created_at,
+                        artifact_id: dbArtifact.id,
+                        size: dbArtifact.size_in_bytes
+                      };
+                    } else {
+                      console.log(`    → Older than current newest (${newestArtifact.created_at})`);
+                    }
                   }
                 } catch (error) {
                   console.log(`Could not check artifacts for run ${run.id}: ${error.message}`);
@@ -84,9 +103,23 @@ jobs:
             }
           }
           
-          console.log('❌ No database artifact found in any recent workflow runs');
-          core.setOutput('run_id', '');
-          core.setOutput('artifact_id', '');
+          // Use the newest artifact found
+          if (newestArtifact) {
+            console.log(`\n✅ USING NEWEST DATABASE:`);
+            console.log(`   Workflow: ${newestArtifact.workflow_name}`);
+            console.log(`   Run ID: ${newestArtifact.run_id}`);
+            console.log(`   Created: ${newestArtifact.created_at}`);
+            console.log(`   Artifact ID: ${newestArtifact.artifact_id}`);
+            console.log(`   Size: ${newestArtifact.size} bytes`);
+            core.setOutput('run_id', String(newestArtifact.run_id));
+            core.setOutput('workflow_name', newestArtifact.workflow_name);
+            core.setOutput('created_at', newestArtifact.created_at);
+            core.setOutput('artifact_id', String(newestArtifact.artifact_id));
+          } else {
+            console.log('\n❌ No database artifact found in any recent workflow runs');
+            core.setOutput('run_id', '');
+            core.setOutput('artifact_id', '');
+          }
 
     - name: Download latest database
       if: steps.get_latest_db.outputs.run_id != ''
@@ -103,10 +136,16 @@ jobs:
       uses: actions/github-script@v7
       with:
         script: |
-          // Search for images artifact across all workflows
+          // Search for images artifact across all workflows and find the most recent one
           const workflows = ['fetch-posts.yml', 'daily-post.yml', 'database-status.yml'];
           
+          console.log('=== SEARCHING FOR MOST RECENT IMAGES ARTIFACT ===');
+          
+          let newestArtifact = null;
+          let newestTime = null;
+          
           for (const workflow of workflows) {
+            console.log(`\n--- Checking ${workflow} ---`);
             try {
               const runs = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
@@ -128,12 +167,22 @@ jobs:
                   
                   const imagesArtifact = artifacts.data.artifacts.find(a => a.name === 'images');
                   if (imagesArtifact) {
-                    console.log(`✅ Found images in ${workflow} run ${run.id} (created: ${run.created_at})`);
-                    core.setOutput('run_id', String(run.id));
-                    core.setOutput('workflow_name', workflow);
-                    core.setOutput('created_at', run.created_at);
-                    core.setOutput('artifact_id', String(imagesArtifact.id));
-                    return;
+                    const artifactTime = new Date(run.created_at);
+                    console.log(`  Found images in run ${run.id} (${run.created_at})`);
+                    
+                    // Keep track of the newest artifact found
+                    if (!newestTime || artifactTime > newestTime) {
+                      console.log(`    → This is the newest so far!`);
+                      newestTime = artifactTime;
+                      newestArtifact = {
+                        run_id: run.id,
+                        workflow_name: workflow,
+                        created_at: run.created_at,
+                        artifact_id: imagesArtifact.id
+                      };
+                    } else {
+                      console.log(`    → Older than current newest (${newestArtifact.created_at})`);
+                    }
                   }
                 } catch (error) {
                   console.log(`Could not check artifacts for run ${run.id}: ${error.message}`);
@@ -144,9 +193,21 @@ jobs:
             }
           }
           
-          console.log('❌ No images artifact found in any recent workflow runs');
-          core.setOutput('run_id', '');
-          core.setOutput('artifact_id', '');
+          // Use the newest artifact found
+          if (newestArtifact) {
+            console.log(`\n✅ USING NEWEST IMAGES:`);
+            console.log(`   Workflow: ${newestArtifact.workflow_name}`);
+            console.log(`   Run ID: ${newestArtifact.run_id}`);
+            console.log(`   Created: ${newestArtifact.created_at}`);
+            core.setOutput('run_id', String(newestArtifact.run_id));
+            core.setOutput('workflow_name', newestArtifact.workflow_name);
+            core.setOutput('created_at', newestArtifact.created_at);
+            core.setOutput('artifact_id', String(newestArtifact.artifact_id));
+          } else {
+            console.log('\n❌ No images artifact found in any recent workflow runs');
+            core.setOutput('run_id', '');
+            core.setOutput('artifact_id', '');
+          }
 
     - name: Download latest images artifact
       if: steps.get_latest_images.outputs.run_id != ''
