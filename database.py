@@ -186,6 +186,7 @@ class Database:
                 print(f"   No unposted messages found")
             print()
             
+            print(f"\n🔍 Querying for unposted messages with scheduled_for >= {current_date}...")
             cursor.execute("""
                 SELECT 
                     pm.id,
@@ -209,9 +210,36 @@ class Database:
             
             row = cursor.fetchone()
             if not row:
-                print(f"\n❌ No messages found after applying filter")
-                print(f"   Current date: {current_date}")
-                print(f"   Query filter: date(substr(scheduled_for, 1, 10)) >= '{current_date}'")
+                print(f"❌ Query returned no results")
+                print(f"   Filters: posted_to_linkedin=0 AND posted_to_x=0")
+                print(f"   AND scheduled_for IS NOT NULL")
+                print(f"   AND date(substr(scheduled_for, 1, 10)) >= '{current_date}'")
+                
+                # Debug: Check if there are ANY unposted messages with scheduled_for
+                cursor.execute("""
+                    SELECT COUNT(*) FROM posted_messages 
+                    WHERE posted_to_linkedin = 0 AND posted_to_x = 0
+                      AND scheduled_for IS NOT NULL
+                """)
+                count = cursor.fetchone()[0]
+                print(f"   Total unposted messages with scheduled_for: {count}")
+                
+                # Debug: Check if date extraction is working
+                cursor.execute("""
+                    SELECT id, scheduled_for, date(substr(scheduled_for, 1, 10)) as date_part
+                    FROM posted_messages 
+                    WHERE posted_to_linkedin = 0 AND posted_to_x = 0
+                      AND scheduled_for IS NOT NULL
+                    ORDER BY id DESC
+                    LIMIT 5
+                """)
+                samples = cursor.fetchall()
+                if samples:
+                    print(f"   Sample messages (latest 5):")
+                    for msg_id, sched, date_part in samples:
+                        comparison = f"'{date_part}' >= '{current_date}' = {date_part >= current_date}"
+                        print(f"      ID {msg_id}: {sched} → date={date_part} ({comparison})")
+                
                 return None
             
             # row[5] is scheduled_for, not row[4]!
