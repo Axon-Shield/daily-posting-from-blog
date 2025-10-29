@@ -164,8 +164,8 @@ class Database:
             current_time = datetime.now(eastern)
             current_date = current_time.date().isoformat()  # e.g., '2025-10-29'
             
-            # Debug: Show messages scheduled for today or later
-            print(f"\n🔍 Messages scheduled for {current_date} or later:")
+            # Debug: Show latest 50 messages by ID
+            print(f"\n🔍 Latest 50 unposted messages (highest IDs):")
             cursor.execute("""
                 SELECT 
                     pm.id,
@@ -176,9 +176,9 @@ class Database:
                 WHERE pm.posted_to_linkedin = 0 
                   AND pm.posted_to_x = 0
                   AND pm.scheduled_for IS NOT NULL
-                  AND date(substr(pm.scheduled_for, 1, 10)) >= ?
-                ORDER BY pm.scheduled_for ASC
-            """, (current_date,))
+                ORDER BY pm.id DESC
+                LIMIT 50
+            """)
             
             debug_messages = cursor.fetchall()
             if debug_messages:
@@ -186,7 +186,7 @@ class Database:
                 for msg_id, sched, linkedin, x in debug_messages:
                     print(f"   - ID {msg_id}: {sched} (L:{linkedin}, X:{x})")
             else:
-                print(f"   No messages found")
+                print(f"   No unposted messages found")
             print()
             
             cursor.execute("""
