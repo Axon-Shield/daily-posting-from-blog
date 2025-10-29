@@ -155,10 +155,71 @@ class Database:
     
     def get_next_message_to_post(self) -> Optional[Dict]:
         """Get the next message that needs to be posted (based on schedule)."""
+        print("\n" + "="*60)
+        print("DATABASE QUERY DEBUG: get_next_message_to_post()")
+        print("="*60)
+        
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
+            # First, get statistics about messages in database
+            print("\n📊 Database Statistics:")
+            cursor.execute("SELECT COUNT(*) FROM posted_messages")
+            total_messages = cursor.fetchone()[0]
+            print(f"   Total messages: {total_messages}")
+            
+            cursor.execute("""
+                SELECT COUNT(*) FROM posted_messages 
+                WHERE posted_to_linkedin = 0 AND posted_to_x = 0
+            """)
+            unposted_count = cursor.fetchone()[0]
+            print(f"   Unposted messages: {unposted_count}")
+            
+            cursor.execute("""
+                SELECT COUNT(*) FROM posted_messages 
+                WHERE posted_to_linkedin = 0 AND posted_to_x = 0 
+                AND scheduled_for IS NOT NULL
+            """)
+            scheduled_unposted_count = cursor.fetchone()[0]
+            print(f"   Scheduled unposted messages: {scheduled_unposted_count}")
+            
+            cursor.execute("""
+                SELECT COUNT(*) FROM posted_messages 
+                WHERE posted_to_linkedin = 1 AND posted_to_x = 1
+            """)
+            fully_posted_count = cursor.fetchone()[0]
+            print(f"   Fully posted messages: {fully_posted_count}")
+            
+            # Show next few scheduled messages
+            print("\n📅 Next 5 Scheduled Unposted Messages:")
+            cursor.execute("""
+                SELECT 
+                    pm.id,
+                    pm.scheduled_for,
+                    pm.posted_to_linkedin,
+                    pm.posted_to_x,
+                    bp.title,
+                    substr(pm.message_text, 1, 50) as preview
+                FROM posted_messages pm
+                JOIN blog_posts bp ON pm.blog_post_id = bp.id
+                WHERE pm.posted_to_linkedin = 0 AND pm.posted_to_x = 0
+                  AND pm.scheduled_for IS NOT NULL
+                ORDER BY pm.scheduled_for ASC
+                LIMIT 5
+            """)
+            upcoming = cursor.fetchall()
+            if upcoming:
+                for msg in upcoming:
+                    msg_id, scheduled_for, linkedin, x, title, preview = msg
+                    print(f"   ID {msg_id}: {scheduled_for} | L:{linkedin} X:{x} | {title[:40]}...")
+            else:
+                print("   (none found)")
+            
             # Find next scheduled message that's due and not posted to any platform
+            print("\n🔍 Executing main query:")
+            print("   Query: SELECT messages WHERE posted_to_linkedin=0 AND posted_to_x=0 AND scheduled_for IS NOT NULL")
+            print("   ORDER BY scheduled_for ASC LIMIT 1")
+            
             cursor.execute("""
                 SELECT 
                     pm.id,
@@ -181,14 +242,40 @@ class Database:
             
             row = cursor.fetchone()
             if not row:
+                print("\n❌ Query Result: No message found")
+                print("   Reason: No unposted messages with scheduled_for set")
+                print("="*60 + "\n")
                 return None
+            
+            print(f"\n✅ Query Result: Found message ID {row[0]}")
+            print(f"   Blog: {row[8]}")
+            print(f"   Scheduled for: {row[5]}")
+            print(f"   Posted to LinkedIn: {row[6]}")
+            print(f"   Posted to X: {row[7]}")
             
             # row[5] is scheduled_for, not row[4]!
             scheduled_time = datetime.fromisoformat(row[5])
+            current_time = datetime.now()
+            
+            print(f"\n⏰ Time Check:")
+            print(f"   Current time: {current_time.isoformat()}")
+            print(f"   Scheduled time: {scheduled_time.isoformat()}")
+            print(f"   Time difference: {scheduled_time - current_time}")
             
             # Check if it's time to post
-            if not self.scheduler.is_time_to_post(scheduled_time):
+            is_time_to_post = self.scheduler.is_time_to_post(scheduled_time)
+            print(f"   Is time to post: {is_time_to_post}")
+            
+            if not is_time_to_post:
+                print("\n⏸️  Message found but not ready to post yet")
+                print(f"   Scheduled time: {scheduled_time.isoformat()}")
+                print(f"   Current time: {current_time.isoformat()}")
+                print(f"   Need to wait: {scheduled_time - current_time}")
+                print("="*60 + "\n")
                 return None  # Not time yet
+            
+            print("\n✅ Message is ready to post!")
+            print("="*60 + "\n")
             
             return {
                 'id': row[0],

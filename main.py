@@ -132,12 +132,28 @@ class BlogPostAutomation:
         print("DAILY POSTING ROUTINE")
         print("="*60 + "\n")
         
+        print(f"Current time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Database path: {Config.DATABASE_PATH}")
+        print(f"Database exists: {os.path.exists(Config.DATABASE_PATH)}")
+        
         # Get next message to post
+        print("\n🔍 Calling get_next_message_to_post()...")
         message_data = self.db.get_next_message_to_post()
         
         if not message_data:
-            print("No messages available to post.")
-            print("Try running: python main.py --fetch-posts")
+            print("\n" + "="*60)
+            print("❌ NO MESSAGE FOUND FOR POSTING")
+            print("="*60)
+            print("\nPossible reasons:")
+            print("1. No unposted messages in database")
+            print("2. All unposted messages don't have scheduled_for set")
+            print("3. Next scheduled message is not yet due (check time window)")
+            print("4. Database may be empty or not properly initialized")
+            print("\n💡 Troubleshooting steps:")
+            print("- Check database status: python main.py --status")
+            print("- Fetch new posts: python main.py --fetch-posts")
+            print("- Check workflow logs for database download")
+            print("="*60 + "\n")
             return
         
         print(f"Blog Post: {message_data['blog_title']}")
