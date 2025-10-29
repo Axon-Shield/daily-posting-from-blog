@@ -54,7 +54,7 @@ jobs:
       with:
         script: |
           // Search for database artifact across all workflows
-          const workflows = ['daily-post.yml', 'fetch-posts.yml', 'database-status.yml'];
+          const workflows = ['fetch-posts.yml', 'daily-post.yml', 'database-status.yml'];
           
           console.log('=== SEARCHING FOR DATABASE ARTIFACT ===');
           console.log(`Current run ID: ${context.runId}`);
