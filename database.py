@@ -164,8 +164,8 @@ class Database:
             current_time = datetime.now(eastern)
             current_date = current_time.date().isoformat()  # e.g., '2025-10-29'
             
-            # Debug: Show latest 50 messages by ID
-            print(f"\n🔍 Latest 50 unposted messages (highest IDs):")
+            # Debug: Show latest 50 messages by ID (all messages, not just unposted)
+            print(f"\n🔍 Latest 50 messages (highest IDs):")
             cursor.execute("""
                 SELECT 
                     pm.id,
@@ -173,9 +173,7 @@ class Database:
                     pm.posted_to_linkedin,
                     pm.posted_to_x
                 FROM posted_messages pm
-                WHERE pm.posted_to_linkedin = 0 
-                  AND pm.posted_to_x = 0
-                  AND pm.scheduled_for IS NOT NULL
+                WHERE pm.scheduled_for IS NOT NULL
                 ORDER BY pm.id DESC
                 LIMIT 50
             """)
