@@ -72,6 +72,9 @@ Please extract {num_messages} distinct, engaging messaging points from this blog
 5. Be written in an engaging, professional tone
 6. Include a call-to-action or thought-provoking element where appropriate
 7. Provide enough detail to be valuable while remaining concise
+8. Important! Combine business terms with technical terms  to appeal to both executives and engineers
+9. Important! Use a problem-to-solution tone: Start by describing a common challenge or pain point, then transition to how the insight resolves it
+10. Important! Follow a narrative structure or story format: Begin with a relatable scenario or example, build tension around the problem, and end with a resolution or key takeaway
 
 Format your response as a numbered list (1. 2. 3. etc.) with one message per line.
 Do not include hashtags or emojis - I will add those when posting.

@@ -251,6 +251,26 @@ jobs:
       run: |
         python -u main.py --regenerate-missing-images
     
+    - name: Regenerate all unposted messages with updated prompt
+      # This step regenerates ALL unposted messages using the updated prompt from content_extractor
+      # To disable: Set REGENERATE_UNPOSTED_MESSAGES to 'false' in repository variables
+      if: ${{ vars.REGENERATE_UNPOSTED_MESSAGES != 'false' }}
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        DATABASE_PATH: ./data/posts.db
+        PYTHONUNBUFFERED: 1
+      run: |
+        echo "🔄 Regenerating all unposted messages with updated prompt..."
+        echo "This step will regenerate all messages that haven't been posted yet"
+        echo "using the updated prompt style from content_extractor.py"
+        echo ""
+        echo "To disable this step, set REGENERATE_UNPOSTED_MESSAGES to 'false'"
+        echo "in your repository variables (Settings > Secrets and variables > Actions > Variables)"
+        echo ""
+        python -u regenerate_unposted_messages.py
+        echo ""
+        echo "📊 Message regeneration complete!"
+    
     - name: Check and regenerate short unposted messages
       # This step finds messages shorter than 280 characters that haven't been posted yet
       # and regenerates them with longer, more detailed content using Anthropic, then updates the database

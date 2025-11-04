@@ -513,4 +513,15 @@ class Database:
             )
             conn.commit()
             print(f"✅ Updated message {message_id} in database")
+    
+    def update_message_schedule(self, message_id: int, scheduled_time: datetime):
+        """Update the scheduled_for time for a specific message."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE posted_messages SET scheduled_for = ? WHERE id = ?",
+                (scheduled_time.isoformat(), message_id)
+            )
+            conn.commit()
+            print(f"✅ Updated schedule for message {message_id} to {scheduled_time.isoformat()}")
 
