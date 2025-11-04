@@ -81,7 +81,9 @@ Please create a new, distinct social media message that:
 5. Is written in an engaging, professional tone
 6. Includes a call-to-action or thought-provoking element where appropriate
 7. Provides enough detail to be valuable while remaining concise
-8. Is different from the existing message but covers related content from the blog
+8. Important! Combine business terms with technical terms  to appeal to both executives and engineers
+9. Important! Use a problem-to-solution tone: Start by describing a common challenge or pain point, then transition to how the insight resolves it
+10. Important! Follow a narrative structure or story format: Begin with a relatable scenario or example, build tension around the problem, and end with a resolution or key takeaway
 
 Return only the new message text, no additional formatting, numbering, hashtags, emojis, or explanations."""
 
