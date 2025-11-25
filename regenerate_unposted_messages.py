@@ -67,23 +67,23 @@ def regenerate_message(extractor, original_text, blog_title, blog_content):
 Blog Title: {blog_title}
 
 Blog Content:
-{blog_content[:3000]}
+{blog_content}
 
 I have an existing social media message from this blog post that I'd like you to regenerate with fresh, engaging content:
 
 Existing Message: {original_text}
 
 Please create a new, distinct social media message that:
-1. Is standalone and makes sense without context
-2. Is suitable for both LinkedIn and X (Twitter)
-3. Is between 100-200 words for optimal engagement and readability
-4. Highlights a key insight, statistic, or takeaway from the post
-5. Is written in an engaging, professional tone
-6. Includes a call-to-action or thought-provoking element where appropriate
-7. Provides enough detail to be valuable while remaining concise
-8. Important! Combine business terms with technical terms  to appeal to both executives and engineers
-9. Important! Use a problem-to-solution tone: Start by describing a common challenge or pain point, then transition to how the insight resolves it
-10. Important! Follow a narrative structure or story format: Begin with a relatable scenario or example, build tension around the problem, and end with a resolution or key takeaway
+1. Ensure using tight sentences, high scannability, and a clear opening hook.
+2. Keep the length between 100–200 words to balance depth with feed-friendly readability.
+3. Lead with one surprising insight, metric, or vivid analogy that immediately earns attention.
+4. Maintain an engaging, authoritative, professional tone suitable for executives and senior engineers.
+5. Include a clear call-to-action or thought-provoking question that invites responses or reflection.
+6. Deliver meaningful value through concise detail, avoiding repetition while keeping each sentence additive.
+7. Blend business language (risk, ROI, operational maturity) with technical language (certificates, trust stores, automation) to appeal to both executives and engineers.
+8. Use a problem-to-solution arc: begin with a recognizable pain point, reveal the underlying cause, and show how the insight resolves it.
+9. Follow a narrative structure: open with a relatable scenario or single vivid moment, build tension around consequences or risks, and close with the key takeaway or lesson learned.
+10. Prefer high-signal metaphors or mental models that make complex technical concepts instantly clear and shareable.
 
 Return only the new message text, no additional formatting, numbering, hashtags, emojis, or explanations."""
 

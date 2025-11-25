@@ -513,7 +513,7 @@ class Database:
             )
             conn.commit()
             print(f"✅ Updated message {message_id} in database")
-    
+
     def update_message_schedule(self, message_id: int, scheduled_time: datetime):
         """Update the scheduled_for time for a specific message."""
         with sqlite3.connect(self.db_path) as conn:
@@ -524,4 +524,113 @@ class Database:
             )
             conn.commit()
             print(f"✅ Updated schedule for message {message_id} to {scheduled_time.isoformat()}")
+    
+    def count_available_slots_today(self) -> int:
+        """Count how many free slots are available today."""
+        import pytz
+        eastern = pytz.timezone('US/Eastern')
+        today = datetime.now(eastern).replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # Check if today is a business day
+        if not self.scheduler.is_business_day(today):
+            return 0
+        
+        # Get all scheduled times for today
+        existing_schedules = self.get_all_scheduled_times()
+        today_schedules = []
+        for schedule in existing_schedules:
+            if schedule.tzinfo is None:
+                schedule = eastern.localize(schedule)
+            else:
+                schedule = schedule.astimezone(eastern)
+            if schedule.date() == today.date():
+                today_schedules.append(schedule)
+        
+        # Count how many slots are still available
+        used_slots = len(today_schedules)
+        available_slots = self.scheduler.MAX_POSTS_PER_DAY - used_slots
+        return max(0, available_slots)  # Ensure non-negative
+    
+    def get_processed_blog_posts(self, limit: int = None) -> List[Dict]:
+        """Get already processed blog posts from the database."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            query = """
+                SELECT 
+                    id,
+                    post_url,
+                    title,
+                    content,
+                    published_date
+                FROM blog_posts
+                ORDER BY published_date DESC, fetched_at DESC
+            """
+            if limit:
+                query += f" LIMIT {limit}"
+            
+            cursor.execute(query)
+            results = []
+            for row in cursor.fetchall():
+                results.append({
+                    'id': row[0],
+                    'url': row[1],
+                    'title': row[2],
+                    'content': row[3],
+                    'published_date': row[4]
+                })
+            return results
+    
+    def add_message_to_existing_post(self, blog_post_id: int, message: str, scheduled_time: datetime) -> Optional[int]:
+        """
+        Add a single message to an existing blog post and schedule it.
+        
+        Args:
+            blog_post_id: ID of the existing blog post
+            message: Message text to add
+            scheduled_time: When to schedule this message
+            
+        Returns:
+            Message ID if successful, None otherwise
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Get the highest message_index for this post
+            cursor.execute("""
+                SELECT MAX(message_index) FROM posted_messages 
+                WHERE blog_post_id = ?
+            """, (blog_post_id,))
+            result = cursor.fetchone()
+            next_index = (result[0] + 1) if result[0] is not None else 0
+            
+            # Get blog title for image generation
+            cursor.execute("SELECT title FROM blog_posts WHERE id = ?", (blog_post_id,))
+            blog_title_result = cursor.fetchone()
+            blog_title = blog_title_result[0] if blog_title_result else ""
+            
+            # Generate image based on probability
+            image_url = None
+            if self.image_generator and Config.GENERATE_IMAGES > 0:
+                import random
+                if random.random() < Config.GENERATE_IMAGES:
+                    try:
+                        image_url = self.image_generator.generate_image_for_message(
+                            blog_title=blog_title,
+                            message_text=message,
+                            message_id=None  # Will get actual ID after insert
+                        )
+                    except Exception as e:
+                        print(f"Warning: Image generation failed: {e}")
+            
+            # Insert the message
+            cursor.execute("""
+                INSERT INTO posted_messages 
+                (blog_post_id, message_index, message_text, image_url, scheduled_for)
+                VALUES (?, ?, ?, ?, ?)
+            """, (blog_post_id, next_index, message, image_url, scheduled_time.isoformat()))
+            
+            message_id = cursor.lastrowid
+            conn.commit()
+            
+            return message_id
 

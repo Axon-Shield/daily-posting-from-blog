@@ -62,19 +62,19 @@ class ContentExtractor:
 Blog Title: {title}
 
 Blog Content:
-{content[:3000]}  # Limit content to avoid token limits
+{content}  # Limit content to avoid token limits
 
-Please extract {num_messages} distinct, engaging messaging points from this blog post. Each message should:
-1. Be standalone and make sense without context
-2. Be suitable for both LinkedIn and X (Twitter)
-3. Be between 100-200 words for optimal engagement and readability
-4. Highlight a key insight, statistic, or takeaway from the post
-5. Be written in an engaging, professional tone
-6. Include a call-to-action or thought-provoking element where appropriate
-7. Provide enough detail to be valuable while remaining concise
-8. Important! Combine business terms with technical terms  to appeal to both executives and engineers
-9. Important! Use a problem-to-solution tone: Start by describing a common challenge or pain point, then transition to how the insight resolves it
-10. Important! Follow a narrative structure or story format: Begin with a relatable scenario or example, build tension around the problem, and end with a resolution or key takeaway
+Please extract {num_messages} distinct, engaging messaging points from this blog post. Each message should follow all of these:
+1. Ensure using tight sentences, high scannability, and a clear opening hook.
+2. Keep the length between 100–200 words to balance depth with feed-friendly readability.
+3. Lead with one surprising insight, metric, or vivid analogy that immediately earns attention.
+4. Maintain an engaging, authoritative, professional tone suitable for executives and senior engineers.
+5. Include a clear call-to-action or thought-provoking question that invites responses or reflection.
+6. Deliver meaningful value through concise detail, avoiding repetition while keeping each sentence additive.
+7. Blend business language (risk, ROI, operational maturity) with technical language (certificates, trust stores, automation) to appeal to both executives and engineers.
+8. Use a problem-to-solution arc: begin with a recognizable pain point, reveal the underlying cause, and show how the insight resolves it.
+9. Follow a narrative structure: open with a relatable scenario or single vivid moment, build tension around consequences or risks, and close with the key takeaway or lesson learned.
+10. Prefer high-signal metaphors or mental models that make complex technical concepts instantly clear and shareable.
 
 Format your response as a numbered list (1. 2. 3. etc.) with one message per line.
 Do not include hashtags or emojis - I will add those when posting.
