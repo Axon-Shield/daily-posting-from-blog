@@ -62,14 +62,70 @@ class BlogPostAutomation:
         
         posts = self.rss_parser.fetch_latest_posts(limit=limit)
         
+        if not posts:
+            print("No posts found in RSS feed.")
+        
         processed_count = 0
         skipped_count = 0
         
-        if not posts:
-            print("No new posts found in RSS feed.")
+        # Process posts from RSS feed
+        if posts:
+            print(f"Found {len(posts)} posts in feed.")
+            
+            for post in posts:
+                print(f"\nProcessing: {post['title']}")
+                print(f"Published: {post['published_date']}")
+                
+                # Check if post already exists BEFORE expensive processing
+                existing_post_id = self.db.get_post_id_by_url(post['url'])
+                
+                if existing_post_id:
+                    print(f"⏭️  Post already exists with ID: {existing_post_id}")
+                    skipped_count += 1
+                    continue
+                
+                # Check if we already have this post
+                try:
+                    # Extract key messages
+                    print("Extracting key messaging points...")
+                    messages = self.content_extractor.extract_daily_messages(
+                        title=post['title'],
+                        content=post['content'],
+                        num_messages=Config.POSTS_PER_BLOG
+                    )
+                    
+                    print(f"Extracted {len(messages)} messages")
+                    
+                    # Try to save to database (may be skipped if schedule is full)
+                    post_id = self.db.save_blog_post(
+                        url=post['url'],
+                        title=post['title'],
+                        content=post['content'],
+                        published_date=post['published_date'],
+                        messages=messages
+                    )
+                    
+                    if post_id:
+                        print(f"✅ Saved to database with ID: {post_id}")
+                        processed_count += 1
+                    else:
+                        print(f"⏸️  Skipped (schedule full)")
+                        skipped_count += 1
+                        # Stop processing older posts if schedule is full
+                        print(f"\n⚠️  Schedule is full. Stopping fetch.")
+                        print(f"   Older posts will be retried when schedule clears.")
+                        break
+                    
+                except Exception as e:
+                    print(f"❌ Error processing post: {e}")
+                    continue
+        
+        # Check for same-day slot filling if no new posts were processed
+        if processed_count == 0:
             print("\n" + "="*60)
             print("CHECKING FOR SAME-DAY SLOT FILLING")
             print("="*60)
+            print("No new posts were processed. Checking for available slots today...")
             
             # Check if there are free slots today
             available_slots = self.db.count_available_slots_today()
@@ -86,6 +142,11 @@ class BlogPostAutomation:
                     print("No existing blog posts found in database.")
                 else:
                     print(f"Found {len(existing_posts)} existing blog post(s) in database.")
+                    
+                    # Randomize the order to get variety in message selection
+                    import random
+                    random.shuffle(existing_posts)
+                    print("📊 Randomized post selection for variety")
                     
                     # Get existing scheduled times for today
                     import pytz
@@ -189,55 +250,127 @@ class BlogPostAutomation:
             print(f"{'='*60}")
             return
         
-        print(f"Found {len(posts)} posts in feed.")
-        
-        for post in posts:
-            print(f"\nProcessing: {post['title']}")
-            print(f"Published: {post['published_date']}")
+        # After processing RSS feed posts, check for same-day slot filling
+        if processed_count == 0:
+            print("\n" + "="*60)
+            print("CHECKING FOR SAME-DAY SLOT FILLING")
+            print("="*60)
+            print("No new posts were processed. Checking for available slots today...")
             
-            # Check if post already exists BEFORE expensive processing
-            existing_post_id = self.db.get_post_id_by_url(post['url'])
+            # Check if there are free slots today
+            available_slots = self.db.count_available_slots_today()
+            print(f"Available slots today: {available_slots}")
             
-            if existing_post_id:
-                print(f"⏭️  Post already exists with ID: {existing_post_id}")
-                skipped_count += 1
-                continue
-            
-            # Check if we already have this post
-            try:
-                # Extract key messages
-                print("Extracting key messaging points...")
-                messages = self.content_extractor.extract_daily_messages(
-                    title=post['title'],
-                    content=post['content'],
-                    num_messages=Config.POSTS_PER_BLOG
-                )
+            if available_slots > 0:
+                print(f"\n📝 Found {available_slots} free slot(s) for today.")
+                print("Creating messages from existing blog posts to fill today's slots...")
                 
-                print(f"Extracted {len(messages)} messages")
+                # Get already processed blog posts
+                existing_posts = self.db.get_processed_blog_posts(limit=available_slots * 2)  # Get more than needed
                 
-                # Try to save to database (may be skipped if schedule is full)
-                post_id = self.db.save_blog_post(
-                    url=post['url'],
-                    title=post['title'],
-                    content=post['content'],
-                    published_date=post['published_date'],
-                    messages=messages
-                )
-                
-                if post_id:
-                    print(f"✅ Saved to database with ID: {post_id}")
-                    processed_count += 1
+                if not existing_posts:
+                    print("No existing blog posts found in database.")
                 else:
-                    print(f"⏸️  Skipped (schedule full)")
-                    skipped_count += 1
-                    # Stop processing older posts if schedule is full
-                    print(f"\n⚠️  Schedule is full. Stopping fetch.")
-                    print(f"   Older posts will be retried when schedule clears.")
-                    break
-                
-            except Exception as e:
-                print(f"❌ Error processing post: {e}")
-                continue
+                    print(f"Found {len(existing_posts)} existing blog post(s) in database.")
+                    
+                    # Randomize the order to get variety in message selection
+                    import random
+                    random.shuffle(existing_posts)
+                    print("📊 Randomized post selection for variety")
+                    
+                    # Get existing scheduled times for today
+                    import pytz
+                    eastern = pytz.timezone('US/Eastern')
+                    today = datetime.now(eastern).replace(hour=0, minute=0, second=0, microsecond=0)
+                    
+                    existing_schedules = self.db.get_all_scheduled_times()
+                    today_schedules = []
+                    for schedule in existing_schedules:
+                        if schedule.tzinfo is None:
+                            schedule = eastern.localize(schedule)
+                        else:
+                            schedule = schedule.astimezone(eastern)
+                        if schedule.date() == today.date():
+                            today_schedules.append(schedule)
+                    
+                    # Get list of blog post IDs that already have messages scheduled for today
+                    # to avoid creating multiple messages from the same post on the same day
+                    posts_with_today_messages = set()
+                    import sqlite3
+                    today_str = today.date().isoformat()
+                    with sqlite3.connect(self.db.db_path) as conn:
+                        cursor = conn.cursor()
+                        # Find all blog_post_ids that have messages scheduled for today
+                        cursor.execute("""
+                            SELECT DISTINCT blog_post_id 
+                            FROM posted_messages 
+                            WHERE scheduled_for IS NOT NULL
+                              AND date(substr(scheduled_for, 1, 10)) = ?
+                        """, (today_str,))
+                        for row in cursor.fetchall():
+                            posts_with_today_messages.add(row[0])
+                    
+                    # Create messages for available slots
+                    messages_created = 0
+                    for post in existing_posts:
+                        if messages_created >= available_slots:
+                            break
+                        
+                        # Skip if this post already has a message scheduled for today
+                        if post['id'] in posts_with_today_messages:
+                            print(f"\n⏭️  Skipping {post['title']} (already has message scheduled for today)")
+                            continue
+                        
+                        print(f"\n📄 Processing existing post: {post['title']}")
+                        
+                        try:
+                            # Extract a single message from this post
+                            print("Extracting one message...")
+                            messages = self.content_extractor.extract_daily_messages(
+                                title=post['title'],
+                                content=post['content'],
+                                num_messages=1  # Just one message for today
+                            )
+                            
+                            if not messages:
+                                print("⚠️  No messages extracted. Skipping.")
+                                continue
+                            
+                            message = messages[0]
+                            
+                            # Find available slot for today
+                            slot_index = self.db.scheduler.get_available_slot(today, today_schedules)
+                            
+                            if slot_index is None:
+                                print("⚠️  No more slots available today. Stopping.")
+                                break
+                            
+                            # Create scheduled time for today
+                            scheduled_time = self.db.scheduler.create_scheduled_time(today, slot_index)
+                            today_schedules.append(scheduled_time)  # Add to list to avoid conflicts
+                            
+                            # Add message to existing post
+                            message_id = self.db.add_message_to_existing_post(
+                                blog_post_id=post['id'],
+                                message=message,
+                                scheduled_time=scheduled_time
+                            )
+                            
+                            if message_id:
+                                print(f"✅ Created message and scheduled for today at {scheduled_time.strftime('%I:%M %p %Z')}")
+                                messages_created += 1
+                                processed_count += 1
+                            else:
+                                print("❌ Failed to add message to database.")
+                            
+                        except Exception as e:
+                            print(f"❌ Error processing existing post: {e}")
+                            continue
+                    
+                    if messages_created > 0:
+                        print(f"\n✅ Created {messages_created} message(s) for today's available slots")
+            else:
+                print("No free slots available today. Skipping same-day slot filling.")
         
         print(f"\n{'='*60}")
         print(f"FETCH SUMMARY")
